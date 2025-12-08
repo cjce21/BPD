@@ -1,0 +1,503 @@
+/* Estilo base para que Inter sea la fuente por defecto */
+body {
+    font-family: 'Inter', sans-serif;
+    /* Mantenemos el texto base oscuro */
+    color: #1f2937; /* text-gray-800 */
+}
+
+/* =================================================================== */
+/* NUEVOS ESTILOS: Estabilidad Numérica (Tabular) */
+/* =================================================================== */
+/* Esto asegura que todos los dígitos (1, 8, 0, etc.) ocupen el mismo ancho, 
+   previniendo el "salto" visual en el contador. */
+.font-tabular-nums {
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =================================================================== */
+/* REEMPLAZO DE ANIMACIÓN DE ERROR (SOLO COLOR, SIN MOVIMIENTO) */
+/* =================================================================== */
+/* Redefinimos .shake para que ya no mueva el input.
+   Ahora aplica un estado de "Alerta Dorada" estático.
+   Usamos !important para asegurar que sobrescriba cualquier clase de borde rojo (border-red-500) 
+   que pueda estar añadiendo el JS actual.
+*/
+.shake {
+    animation: none; /* Eliminamos el movimiento */
+    border-color: #d97706 !important; /* amber-600 */
+    background-color: #fffbeb !important; /* amber-50 */
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important; /* Anillo de enfoque suave dorado */
+    transition: all 0.3s ease; /* Transición suave del color */
+}
+
+/* =================================================================== */
+/* NUEVAS ANIMACIONES DE CARGA (MODERNO) - FIX DE SHIMMER */
+/* =================================================================== */
+
+/* 1. ANIMACIÓN DE SHIMMER (BRILLO DORADO HORIZONTAL) */
+/* Se aplica a .loading-shimmer-text */
+.loading-shimmer-text {
+    /* Base para el efecto: Recortar el degradado al texto */
+    background: linear-gradient(90deg, #d97706, #fcd34d, #d97706);
+    background-size: 200% 100%;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    
+    /* Animación del movimiento del degradado (el brillo) */
+    animation: shimmer-animation 2.5s infinite linear;
+    animation-play-state: running; /* Aseguramos que la animación corra */
+}
+
+@keyframes shimmer-animation {
+    /* Empieza con el brillo fuera a la izquierda */
+    0% { background-position: 200% 0; }
+    /* Se mueve de izquierda a derecha y vuelve a empezar */
+    100% { background-position: -200% 0; }
+}
+
+/* 2. ANIMACIÓN DE PUNTOS DE CARGA (MODERNA - Bounce Wave) */
+.loading-dot {
+    /* La animación es 'bounce' */
+    animation: dot-bounce 1s infinite alternate;
+    animation-play-state: running; /* Aseguramos que la animación corra */
+}
+
+@keyframes dot-bounce {
+    0% {
+        transform: translateY(0);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-8px); /* Sube 8px */
+        opacity: 0.3;
+    }
+}
+
+/* Animación de puntos de carga (para el indicador de estado pequeño en el header) */
+@keyframes pulse-dot-animation {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.animate-pulse-dot {
+    animation: pulse-dot-animation 1.4s infinite ease-in-out;
+}
+
+/* =================================================================== */
+/* Animación del Botón de Menú (Hamburguesa) y Cierre (X) */
+/* =================================================================== */
+.menu-toggle-icon {
+     transition: transform 0.3s ease-out, color 0.3s ease-out;
+}
+.menu-toggle-icon:hover {
+    color: #d97706; /* amber-600 */
+    transform: rotate(90deg); 
+}
+.modal-close-btn {
+    transition: transform 0.3s ease-out, color 0.3s ease-out;
+}
+.modal-close-btn:hover {
+    transform: rotate(90deg);
+    color: #d97706; /* amber-600 */
+}
+
+/* =================================================================== */
+/* ESTILOS DE SCROLLBAR (Monocromo Gris) */
+/* =================================================================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 3px;
+    border: 2px solid transparent; 
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; 
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9; 
+    border-radius: 3px;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE y Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* =================================================================== */
+/* Estilos para las Pestañas (Tabs) en el modal de administración */
+/* =================================================================== */
+.tab-btn {
+    border-radius: 0;
+    margin-right: 0.5rem;
+}
+#transaccion-modal .tab-btn.active-tab,
+#transacciones-combinadas-modal .tab-btn.active-tab {
+    border-bottom-color: #d97706 !important; /* amber-600 */
+    color: #d97706 !important; /* amber-600 */
+}
+
+/* Altura unificada para el contenido de las pestañas de admin */
+.tab-content {
+    height: 550px; 
+    overflow-y: auto; 
+}
+
+/* =================================================================== */
+/* Estilos para el contenedor de resultados de búsqueda (Modo Claro) */
+/* =================================================================== */
+.search-results-container {
+    position: absolute;
+    z-index: 10;
+    width: 100%;
+    background-color: white; 
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+    margin-top: 0.25rem; /* mt-1 */
+    max-height: 15rem; /* max-h-60 */
+    overflow-y: auto;
+}
+
+/* =================================================================== */
+/* ESTILOS DE TOOLTIP (Modo Oscuro) */
+/* =================================================================== */
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-text {
+    visibility: hidden; 
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    background-color: #1f2937; /* bg-gray-800 */
+    color: #ffffff;
+    text-align: left;
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 0.5rem 0.75rem; 
+    position: absolute;
+    z-index: 50;
+    
+    top: 125%; 
+    bottom: auto; 
+    left: 50%;
+    transform: translateX(-50%); 
+    
+    display: block !important;
+}
+
+.tooltip-text svg {
+    position: absolute;
+    bottom: 100%; 
+    top: auto; 
+    left: 0;
+    width: 100%;
+    height: 0.5rem; 
+    color: #1f2937; 
+}
+
+.tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .tooltip-text {
+        display: none !important;
+    }
+}
+
+/* =================================================================== */
+/* Hero Section Dinámica (Carrusel SLIDE) */
+/* =================================================================== */
+/* FIX 1: ALTURA CONSOLIDADA PARA EVITAR EL CLS/SCROLL */
+.hero-section-bpd {
+    min-height: 250px;
+}
+
+/* Estilo base de los slides */
+.hero-slide {
+    pointer-events: auto; 
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    text-align: left; 
+    text-shadow: none;
+}
+
+/* Estilos específicos para el slide de reglas */
+.hero-slide:nth-child(2) {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* =================================================================== */
+/* ESTILOS PARA INPUT RANGE (SLIDER) CORREGIDO */
+/* Asegura que el relleno de color dorado se vea en el track */
+/* =================================================================== */
+
+.range-lg {
+  height: 8px; 
+  -webkit-appearance: none;
+  background: #cbd5e1; /* slate-300 - ESTO SERÁ SOBREESCRITO POR JS */
+  border-radius: 4px;
+}
+
+/* Estilo del thumb (círculo) para Chrome/Safari/Edge */
+.range-lg::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; 
+  height: 16px;
+  border-radius: 50%;
+  background: #d97706; /* amber-600 */
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+  margin-top: -4px;
+}
+
+/* Estilo del thumb para Firefox */
+.range-lg::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #d97706; /* amber-600 */
+  cursor: pointer;
+  border: none;
+}
+
+/* Estilo del track para Firefox - Importante para que el relleno del track funcione */
+.range-lg::-moz-range-track {
+  height: 8px;
+  background: #cbd5e1; 
+  border-radius: 4px;
+}
+
+/* =================================================================== */
+/* CLASES PERSONALIZADAS INTEGRADAS DESDE INDEX.HTML */
+/* =================================================================== */
+
+/* Definición de la Paleta Dorada (Amber Elegante) */
+.color-dorado-main { color: #d97706; /* amber-600 */ }
+.bg-dorado-light { background-color: #fffbeb; /* amber-50 */ }
+.border-dorado-main { border-color: #d97706; /* amber-600 }
+.ring-dorado-main { --tw-ring-color: #d97706; }
+.shadow-dorado-soft { --tw-shadow-color: #f59e0b; /* amber-500 */ } 
+
+/* CONTENEDOR UNIFICADO DE MODALES (96% ANCHO) */
+.full-width-modal-dialog {
+     width: 96vw !important; 
+     max-width: 96vw !important; 
+}
+
+/* ALTURA FIJA PARA CONTENIDO DE MODALES SIN SCROLL */
+.modal-content-fixed-height {
+    /* Altura del contenido interno del modal */
+    height: 550px; 
+    overflow: hidden; 
+}
+
+/* Homogeneización de botones de barra lateral */
+.sidebar-action-btn {
+    height: 40px; /* Altura fija para consistencia visual */
+    padding: 8px 12px;
+    font-weight: 600; /* Semibold para un look bancario */
+    text-align: center;
+}
+
+/* Ajuste para el contenedor del Hero para permitir el deslizamiento (Slide) */
+.hero-carousel-track {
+    display: flex; 
+    transition: transform 0.5s ease-in-out;
+    /* AJUSTE USUARIO: Altura más compacta */
+    height: 100%; 
+    min-height: 180px; 
+}
+
+.hero-carousel-container {
+    overflow: hidden; 
+}
+
+/* AJUSTE USUARIO: Contenedor interno más compacto */
+.hero-slide-content {
+    height: 100%;
+    min-height: 160px; /* Altura base para evitar el CLS */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hero-slide {
+    flex-shrink: 0; 
+    width: 100%; 
+    position: relative !important; 
+    inset: auto !important; 
+    opacity: 1 !important; 
+    transition: none !important; 
+    pointer-events: auto !important; 
+    
+    /* Alinear el contenido al inicio del slide (Top-Left) */
+    align-items: flex-start !important; 
+    justify-content: flex-start !important; 
+    text-align: left !important;
+}
+
+/* Fondos específicos para el slide principal */
+.bg-slide-main {
+    background-image: linear-gradient(to right, #f59e0b, #d97706);
+}
+
+/* FIX 3: Homogeneización de botones de navegación del Hero */
+.hero-nav-btn {
+    width: 9rem; /* 144px de ancho para botones amplios */
+    height: 40px; 
+    min-width: 120px;
+}
+
+/* =================================================================== */
+/* ESTILOS DE UI (Tarjetas Compactas y Tarjeta Personal)  */
+/* =================================================================== */
+
+/* Estabilidad: Altura fija para mensajes de estado y error en modales de transacción */
+.status-msg-fixed-height {
+    /* Se usa en script.js con h-10/40px. Esto asegura que el mensaje siempre ocupa el mismo espacio. */
+    height: 40px; 
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    font-weight: 500;
+}
+
+/* Base para Tarjetas de Bonos y Tienda (Compactación) */
+.compact-card {
+    /* Reducimos el padding interno para compactar verticalmente y horizontalmente */
+    padding: 0.75rem; /* p-3 */
+}
+.compact-card .title-text {
+    /* Fuente más pequeña */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 600; /* font-semibold */
+}
+.compact-card .small-text {
+    /* Fuente más pequeña para descripciones */
+    font-size: 0.75rem; /* text-xs */
+}
+.compact-card .price-text {
+     /* Precio sigue siendo grande pero con menos margen */
+     font-size: 1.25rem; /* text-xl */
+     font-weight: 700; /* font-bold */
+}
+.compact-card .buy-btn {
+    /* Botón más compacto */
+    padding: 0.25rem 0.75rem; /* px-3 py-1 */
+    font-size: 0.75rem; /* text-xs */
+}
+
+/* === TARJETA DE ALUMNO (NUEVO DISEÑO COMPACTO) === */
+.personal-student-card {
+    /* Mantenemos el estilo de borde para el modal content para la tarjeta */
+    background-color: #ffffff;
+    color: #1f2937; 
+    /* Quitamos el overflow hidden para el modal, lo maneja el modal-content */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-2xl */
+}
+
+/* Estilos de las secciones dentro de la tarjeta compacta (definidas para el nuevo HTML) */
+.card-section-compact {
+    padding: 1rem; /* p-4 */
+    border-left: 4px solid #d97706; /* border-l-4 border-amber-600 */
+    background-color: #ffffff;
+}
+.card-stats-grid {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     gap: 0.75rem; /* gap-3 */
+     margin-top: 0.75rem; /* mt-3 */
+}
+.stat-box-compact {
+    padding: 0.75rem; /* p-3 */
+    background-color: #f8fafc; /* bg-slate-50 */
+    border: 1px solid #e2e8f0; /* border border-slate-200 */
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* shadow-inner */
+    text-align: center;
+}
+.stat-label-compact {
+    font-size: 0.75rem; /* text-xs */
+    color: #64748b; /* text-slate-500 */
+    text-transform: uppercase;
+    font-weight: 700; /* font-bold */
+    letter-spacing: 0.05em; /* tracking-wide */
+}
+.stat-value-compact {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 800; /* font-extrabold */
+    color: #1e293b; /* text-slate-800 */
+}
+/* Estilos para el Reporte de Confirmación/Recibo */
+.confirmation-report-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0; /* border border-slate-200 */
+    padding: 2rem; /* p-8 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+    width: 100%;
+    max-width: 32rem; /* max-w-lg */
+    margin-left: auto;
+    margin-right: auto;
+    animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.report-divider {
+    border-bottom: 1px dashed #cbd5e1; /* border-b border-dashed border-slate-300 */
+    margin-top: 0.75rem; /* my-3 */
+    margin-bottom: 0.75rem;
+}
+
+/* =================================================================== */
+/* ANIMACIÓN ENLACE PORTAFOLIO (DIDAC-CLICK) */
+/* =================================================================== */
+
+@keyframes goldPulseSlow {
+    0%, 100% {
+        color: #94a3b8; /* slate-400 (Gris original) */
+        text-shadow: none;
+    }
+    50% {
+        color: #d97706; /* amber-600 (Dorado BPD) */
+        text-shadow: 0 0 12px rgba(217, 119, 6, 0.4); /* Resplandor suave */
+        transform: scale(1.02); /* Ligerísimo aumento de tamaño */
+    }
+}
+
+.gold-pulse-link {
+    display: inline-block;
+    text-decoration: none;
+    animation: goldPulseSlow 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.gold-pulse-link:hover {
+    /* Al pasar el mouse, se queda dorado fijo y subraya */
+    animation: none;
+    color: #d97706;
+    text-shadow: 0 0 15px rgba(217, 119, 6, 0.6);
+    text-decoration: underline;
+    transform: scale(1.05);
+}
