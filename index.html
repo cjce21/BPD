@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BPD v32.7 (Simetría UI, Contador Estable, Botón Fijo, Paleta BPD) -->
+<!-- BPD v33.0 (Programación de Apertura Manual + UI Estable) -->
 <html lang="es" class="h-full bg-slate-50 overflow-hidden">
 <head>
     <meta charset="UTF-8">
@@ -986,6 +986,30 @@
                                 </form>
                             </div>
                             <div id="tienda-admin-controls-container">
+                                
+                                <!-- NUEVA SECCIÓN: PROGRAMACIÓN DE APERTURA -->
+                                <div class="mb-6 border-b border-slate-200 pb-4">
+                                    <h3 class="text-lg font-semibold color-dorado-main mb-2">Programar Apertura</h3>
+                                    <p class="text-sm text-slate-700 mb-3">Define una fecha exacta para el contador. Si se deja vacío, se usará el cálculo automático (último jueves).</p>
+                                    
+                                    <div class="flex flex-col gap-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha y Hora de Apertura</label>
+                                            <input type="datetime-local" id="tienda-admin-date-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm">
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <button type="button" id="tienda-admin-save-date-btn" class="px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 shadow-sm transition-colors">
+                                                Guardar Fecha
+                                            </button>
+                                            <button type="button" id="tienda-admin-clear-date-btn" class="px-3 py-2 bg-white border border-slate-300 text-slate-600 text-xs font-medium rounded-lg hover:bg-slate-50 shadow-sm transition-colors">
+                                                Borrar (Usar Auto)
+                                            </button>
+                                        </div>
+                                         <!-- Mensaje de estado específico para la fecha -->
+                                        <div id="tienda-date-status-msg" class="text-xs text-center font-medium h-4 mt-1"></div>
+                                    </div>
+                                </div>
+                                
                                 <h3 class="text-lg font-semibold color-dorado-main mb-2">Control Manual</h3>
                                 <p class="text-sm text-slate-700 mb-3">Anula el temporizador para forzar la apertura o cierre.</p>
                                 <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
