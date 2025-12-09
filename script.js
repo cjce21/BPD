@@ -10,7 +10,7 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v32.7 (Ctrl + U)', // Versión actualizada con estandarización visual
+    APP_VERSION: 'v33.0 (Manual Date)', // Versión actualizada
     
     IMPUESTO_P2P_TASA: 0.01,        
     IMPUESTO_DEPOSITO_TASA: 0.0,    
@@ -77,6 +77,7 @@ const AppState = {
         items: {},
         isStoreOpen: false,
         storeManualStatus: 'auto',
+        nextOpeningDate: null, // NUEVO: Almacena la fecha manual de apertura
         selectedItem: null,
     },
     
@@ -184,6 +185,9 @@ const AppData = {
         AppState.tienda.items = data.tiendaStock || {};
         AppState.tienda.storeManualStatus = data.storeManualStatus || 'auto';
         
+        // NUEVO: Procesar fecha de apertura programada
+        AppState.tienda.nextOpeningDate = data.storeNextOpening || null; 
+        
         const allGroups = data.gruposData;
         let gruposOrdenados = Object.entries(allGroups).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
         
@@ -256,6 +260,10 @@ const AppData = {
             } else if (tabId === 'tienda_gestion' || tabId === 'tienda_inventario') {
                 AppUI.populateTiendaAdminList();
                 AppUI.updateTiendaAdminStatusLabel();
+                // Actualizar el input de fecha si está en la pestaña de gestión
+                if (tabId === 'tienda_gestion') {
+                    AppUI.populateTiendaAdminDate();
+                }
             } 
         }
     }
@@ -267,7 +275,6 @@ const AppUI = {
     init: function() {
         // Listeners Modales de Gestión (Clave)
         document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
-        // CORRECCIÓN: El evento de submit ahora llama a la función asíncrona segura
         document.getElementById('modal-submit').addEventListener('click', AppTransacciones.verificarClaveMaestra); 
         
         // LISTENERS: MODAL COMBINADO DE TRANSACCIONES
@@ -349,6 +356,10 @@ const AppUI = {
         document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
         document.getElementById('tienda-admin-form').addEventListener('submit', (e) => { e.preventDefault(); AppTransacciones.crearActualizarItem(); });
         document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
+        
+        // NUEVOS LISTENERS: GESTIÓN DE FECHA DE APERTURA (TIENDA)
+        document.getElementById('tienda-admin-save-date-btn').addEventListener('click', AppTransacciones.guardarFechaApertura);
+        document.getElementById('tienda-admin-clear-date-btn').addEventListener('click', AppTransacciones.borrarFechaApertura);
 
         document.getElementById('db-link-btn').href = AppConfig.SPREADSHEET_URL;
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
@@ -385,30 +396,21 @@ const AppUI = {
         setInterval(AppUI.updateCountdown, 1000);
     },
     
-    // MODIFICADA: Implementación de la corrección del "salto" de carga.
     hideLoading: function() {
         const loadingOverlay = document.getElementById('loading-overlay');
         const appContainer = document.getElementById('app-container');
 
         if (loadingOverlay.classList.contains('opacity-0')) {
-             // Ya está oculto, solo asegurarse de que el contenedor principal sea visible
              appContainer.classList.remove('hidden', 'opacity-0');
              return;
         }
 
-        // 1. Iniciar transición (fade-out del overlay)
         loadingOverlay.classList.add('opacity-0');
-        
-        // 2. Mostrar contenedor principal (fade-in)
         appContainer.classList.remove('hidden');
-        // Usar setTimeout para aplicar opacity-100 después de que la clase 'hidden' se haya eliminado, 
-        // permitiendo que la transición CSS de opacity-0 a opacity-100 funcione.
         setTimeout(() => {
             appContainer.classList.remove('opacity-0');
         }, 10); 
 
-
-        // 3. Ocultar físicamente el overlay después de la transición (500ms)
         setTimeout(() => {
             loadingOverlay.style.display = 'none';
             loadingOverlay.classList.add('pointer-events-none');
@@ -525,7 +527,7 @@ const AppUI = {
         AppUI.showModal('student-modal');
     },
     
-    // --- FUNCIÓN DE INFORME DE CONFIRMACIÓN (CORREGIDA - FACTURAS HORIZONTALES) ---
+    // --- FUNCIÓN DE INFORME DE CONFIRMACIÓN ---
     showSuccessSummary: function(modalId, reportData, reportType) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -563,7 +565,6 @@ const AppUI = {
 
         let title, detailsHtml = '';
 
-        // Helper para tarjetas de datos compactos (GRID)
         const formatCompactStat = (label, value, extraClass = '') => `
             <div class="bg-slate-50 p-2 rounded border border-slate-100 text-center ${extraClass}">
                 <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">${label}</p>
@@ -747,9 +748,7 @@ const AppUI = {
             document.getElementById('p2p-cantidad').value = "";
             AppUI.updateP2PCalculoImpuesto();
             
-            // CORRECCIÓN: Limpiar el efecto visual de la clave al cambiar de pestaña
             document.getElementById('p2p-clave').classList.remove('shake'); 
-            
             document.getElementById('p2p-clave').focus();
         } else if (tabId === 'prestamo_flex') {
             AppUI.resetFlexibleForm('prestamo');
@@ -796,7 +795,6 @@ const AppUI = {
         const minMonto = AppConfig.PRESTAMO_MIN_MONTO;
         const maxMonto = AppConfig.PRESTAMO_MAX_MONTO;
         
-        // 1. Validaciones Básicas
         if (monto < minMonto || monto > maxMonto || plazo < AppConfig.PRESTAMO_MIN_PLAZO_DIAS || plazo > AppConfig.PRESTAMO_MAX_PLAZO_DIAS) {
             tasaDisplay.textContent = '-';
             totalPagarDisplay.textContent = 'Monto/Plazo Inválido';
@@ -806,7 +804,6 @@ const AppUI = {
             return;
         }
 
-        // 2. Cálculo de la Tasa
         const tasaDecimal = AppFormat.calculateLoanRate(plazo);
         const interesTotal = monto * tasaDecimal;
         const totalAPagar = Math.ceil(monto + interesTotal);
@@ -817,7 +814,6 @@ const AppUI = {
         cuotaDiariaDisplay.textContent = `${AppFormat.formatNumber(cuotaDiaria)} ℙ`;
         document.getElementById('prestamo-elegibilidad-msg').textContent = 'Defina los parámetros para evaluar elegibilidad.';
         
-        // 3. Validaciones de Elegibilidad (Alumno)
         if (!student) {
             AppTransacciones.setEligibilityState(btn, document.getElementById('prestamo-elegibilidad-msg'), false, 'Busque su nombre para validar elegibilidad.', true);
             return;
@@ -849,7 +845,6 @@ const AppUI = {
         
         const minMonto = AppConfig.DEPOSITO_MIN_MONTO;
 
-        // 1. Validaciones Básicas
         if (monto < minMonto || plazo < AppConfig.DEPOSITO_MIN_PLAZO_DIAS || plazo > AppConfig.DEPOSITO_MAX_PLAZO_DIAS) {
             tasaDisplay.textContent = '-';
             gananciaDisplay.textContent = 'Monto/Plazo Inválido';
@@ -859,7 +854,6 @@ const AppUI = {
             return;
         }
 
-        // 2. Cálculo de la Tasa
         const tasaDecimal = AppFormat.calculateDepositRate(plazo);
         const interesBruto = monto * tasaDecimal;
         const totalARecibir = Math.ceil(monto + interesBruto);
@@ -869,8 +863,6 @@ const AppUI = {
         totalRecibirDisplay.textContent = `${AppFormat.formatNumber(totalARecibir)} ℙ`;
         document.getElementById('deposito-elegibilidad-msg').textContent = 'Defina los parámetros para evaluar elegibilidad.';
 
-        
-        // 3. Validaciones de Elegibilidad (Alumno)
         if (!student) {
             AppTransacciones.setEligibilityState(btn, document.getElementById('deposito-elegibilidad-msg'), false, 'Busque su nombre para validar elegibilidad.', true);
             return;
@@ -898,8 +890,6 @@ const AppUI = {
         document.getElementById('loading-overlay').classList.remove('opacity-0', 'pointer-events-none');
     },
 
-    // La lógica de hideLoading se sobrescribió arriba para evitar el salto inicial
-
     mostrarVersionApp: function() {
         const versionContainer = document.getElementById('app-version-container');
         versionContainer.classList.add('text-slate-400'); 
@@ -912,14 +902,12 @@ const AppUI = {
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
         
-        // FIX: Mostrar overlay de sidebar si la sidebar está abierta en móvil
         if (modalId === 'transaccion-modal' || modalId === 'transacciones-combinadas-modal' || modalId === 'bonos-modal' || modalId === 'tienda-modal') {
              if (AppState.isSidebarOpen) {
                  AppUI.toggleSidebar();
              }
         }
         
-        // CORRECCIÓN: Limpiar clase .shake al abrir el modal de gestión para resetear el estado
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').classList.remove('shake');
         }
@@ -940,7 +928,7 @@ const AppUI = {
             document.getElementById('transaccion-cantidad-input').value = "";
             document.getElementById('transaccion-calculo-impuesto').textContent = ""; 
             AppState.transaccionSelectAll = {}; 
-            // FIX: Limpiar el nuevo estado de transacciones al cerrar el modal
+            
             AppState.transaccionSelectedGroups.clear();
             AppState.transaccionSelectedUsers.clear();
             
@@ -949,6 +937,9 @@ const AppUI = {
             document.getElementById('bono-admin-status-msg').textContent = "";
             AppUI.clearTiendaAdminForm();
             document.getElementById('tienda-admin-status-msg').textContent = "";
+            
+            // Limpiar mensaje de fecha
+            document.getElementById('tienda-date-status-msg').textContent = "";
         }
         
         if (modalId === 'transacciones-combinadas-modal') {
@@ -961,7 +952,6 @@ const AppUI = {
             document.getElementById('p2p-cantidad').value = "";
             document.getElementById('p2p-calculo-impuesto').textContent = "";
             
-            // CORRECCIÓN: Limpiar la clase .shake en la clave P2P al cerrar el modal de transacciones
             document.getElementById('p2p-clave').classList.remove('shake'); 
             
             AppTransacciones.setLoadingState(document.getElementById('p2p-submit-btn'), document.getElementById('p2p-btn-text'), false, 'Realizar Transferencia');
@@ -972,7 +962,6 @@ const AppUI = {
         }
         
         if (modalId === 'bonos-modal') {
-            // FIX: Resetear estado de Bonos al cerrar, asegurando que el reporte se oculte
             document.getElementById('bono-report-container').classList.add('hidden');
             document.getElementById('bono-main-step-container').classList.remove('hidden');
             AppUI.showBonoStep1();
@@ -986,7 +975,6 @@ const AppUI = {
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
-             // CORRECCIÓN: Eliminar ambas clases para asegurar que se borre el estilo de alerta
              document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
         }
         
@@ -1000,7 +988,6 @@ const AppUI = {
         AppUI.resetSearchInput(`${type}Alumno`);
         document.getElementById(`${type}-clave-p2p`).value = "";
         
-        // CORRECCIÓN: Limpiar la clase .shake de las claves P2P en préstamos/depósitos
         document.getElementById(`${type}-clave-p2p`).classList.remove('shake');
 
         const montoInput = document.getElementById(`${type}-monto-input`);
@@ -1036,7 +1023,6 @@ const AppUI = {
         
         if (tabId === 'transaccion') {
             if (AppState.datosActuales) {
-                // FIX: Llama al renderizado que preserva el estado
                 AppUI.populateGruposTransaccion();
                 AppUI.populateUsuariosTransaccion();
             } else {
@@ -1054,7 +1040,8 @@ const AppUI = {
                 AppUI.populateAdminGroupCheckboxes('tienda-admin-grupos-checkboxes-container', 'tienda');
             }
             AppUI.updateTiendaAdminStatusLabel();
-            AppUI.clearTiendaAdminForm(); 
+            AppUI.clearTiendaAdminForm();
+            AppUI.populateTiendaAdminDate(); // Cargar la fecha guardada
         } else if (tabId === 'tienda_inventario') { 
             AppUI.populateTiendaAdminList();
         }
@@ -1084,7 +1071,6 @@ const AppUI = {
                  AppUI.handleStudentSearch(query, inputId, resultsId, stateKey, onSelectCallback);
             }
             
-            // CORRECCIÓN: Limpiar clase .shake de campos de búsqueda al escribir
             input.classList.remove('shake');
         });
         
@@ -1099,7 +1085,6 @@ const AppUI = {
                  if (input.value) {
                      AppUI.handleStudentSearch(input.value, inputId, resultsId, stateKey, onSelectCallback);
                  }
-                 // CORRECCIÓN: Limpiar clase .shake de campos de búsqueda al hacer focus
                  input.classList.remove('shake');
             });
         }
@@ -1116,7 +1101,6 @@ const AppUI = {
         const lowerQuery = query.toLowerCase();
         let studentList = AppState.datosAdicionales.allStudents;
         
-        // La lógica para Cicla ha sido corregida
         const ciclaAllowed = ['p2pDestino', 'prestamoAlumno', 'depositoAlumno', 'bonoAlumno', 'tiendaAlumno']; 
         if (!ciclaAllowed.includes(stateKey)) {
             studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
@@ -1144,7 +1128,6 @@ const AppUI = {
                     resultsContainer.classList.add('hidden');
                     onSelectCallback(student);
                     
-                    // CORRECCIÓN: Limpiar clase .shake del input al seleccionar un resultado
                     input.classList.remove('shake');
                 };
                 resultsContainer.appendChild(div);
@@ -1172,7 +1155,6 @@ const AppUI = {
             const input = document.getElementById(inputId);
             if (input) {
                 input.value = "";
-                // CORRECCIÓN: Limpiar clase .shake al resetear el input
                 input.classList.remove('shake');
                 const resultsId = input.dataset.resultsId;
                 const results = document.getElementById(resultsId || `${inputId}-results`);
@@ -1189,13 +1171,9 @@ const AppUI = {
         }
     },
     
-    selectP2PStudent: function(student) {
-        // No action needed other than search state update
-    },
+    selectP2PStudent: function(student) { },
     
-    selectBonoStudent: function(student) {
-        // No action needed other than search state update
-    },
+    selectBonoStudent: function(student) { },
 
     selectTiendaStudent: function(student) {
         AppUI.updateTiendaButtonStates();
@@ -1278,7 +1256,6 @@ const AppUI = {
         const calculoMsg = document.getElementById('p2p-calculo-impuesto');
         const cantidad = parseInt(cantidadInput.value, 10);
         
-        // CORRECCIÓN: Limpiar clase .shake del input de cantidad al escribir
         cantidadInput.classList.remove('shake');
 
         if (isNaN(cantidad) || cantidad <= 0) {
@@ -1309,7 +1286,6 @@ const AppUI = {
         document.getElementById('bono-step2-status-msg').textContent = "";
         document.getElementById('bono-clave-p2p-step2').value = "";
         
-        // CORRECCIÓN: Limpiar clase .shake de la clave P2P de bonos al volver al paso 1
         document.getElementById('bono-clave-p2p-step2').classList.remove('shake');
         
         AppUI.resetSearchInput('bonoAlumno');
@@ -1501,7 +1477,6 @@ const AppUI = {
         document.getElementById('tienda-step2-status-msg').textContent = "";
         document.getElementById('tienda-clave-p2p-step2').value = "";
         
-        // CORRECCIÓN: Limpiar clase .shake de la clave P2P de tienda al volver al paso 1
         document.getElementById('tienda-clave-p2p-step2').classList.remove('shake');
         
         document.getElementById('tienda-search-alumno-step2').value = AppState.currentSearch.tiendaAlumno.info?.nombre || '';
@@ -1536,7 +1511,6 @@ const AppUI = {
     },
 
     renderTiendaItems: function() {
-        // CORRECCIÓN: Manejar estado nulo o vacío de la tienda de manera segura
         if (!AppState.datosActuales || !AppState.tienda.items || Object.keys(AppState.tienda.items).length === 0) {
              const container = document.getElementById('tienda-items-container');
              if(container) container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-4">No hay artículos cargados en el inventario.</p>`;
@@ -1622,7 +1596,6 @@ const AppUI = {
     },
 
     updateTiendaButtonStates: function() {
-         // Lógica para habilitar/deshabilitar botones de compra según el saldo del usuario seleccionado
          const student = AppState.currentSearch.tiendaAlumno.info;
          const buttons = document.querySelectorAll('.tienda-buy-btn');
 
@@ -1631,7 +1604,6 @@ const AppUI = {
              const item = AppState.tienda.items[itemId];
              if (!item) return;
              
-             // Si la tienda no está abierta manualmente, desactivar botones visualmente
              if (!AppState.tienda.isStoreOpen) {
                  btn.disabled = true;
                  btn.classList.add('bg-slate-100', 'text-slate-500', 'border-slate-300', 'cursor-not-allowed');
@@ -1651,7 +1623,6 @@ const AppUI = {
                        btn.title = "";
                   }
              } else {
-                  // Estado neutral si no hay usuario seleccionado (permitir click para iniciar flujo)
                   btn.disabled = false;
                   btn.classList.remove('opacity-50', 'cursor-not-allowed');
              }
@@ -1684,6 +1655,29 @@ const AppUI = {
         } else {
             label.textContent = "Desconocido";
             label.classList.add('text-slate-600');
+        }
+    },
+    
+    // --- NUEVO: Rellenar el input de fecha del admin ---
+    populateTiendaAdminDate: function() {
+        const dateInput = document.getElementById('tienda-admin-date-input');
+        if (!dateInput) return;
+        
+        if (AppState.tienda.nextOpeningDate) {
+            // La fecha viene en formato ISO, el input datetime-local la acepta directamente (hasta minutos)
+            // Asegurarnos de que el formato sea YYYY-MM-DDTHH:MM
+            const d = new Date(AppState.tienda.nextOpeningDate);
+            if (!isNaN(d.getTime())) {
+                // Ajuste a local string para el input
+                // datetime-local espera 'YYYY-MM-DDThh:mm'
+                const pad = (n) => n.toString().padStart(2, '0');
+                const localISO = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+                dateInput.value = localISO;
+            } else {
+                dateInput.value = '';
+            }
+        } else {
+            dateInput.value = '';
         }
     },
 
@@ -1830,15 +1824,12 @@ const AppUI = {
     populateGruposTransaccion: function() {
         const grupoContainer = document.getElementById('transaccion-lista-grupos-container');
         
-        // --- FIX: Capturar el estado de selección de grupos actual (sobrevive a refrescos) ---
         const currentSelectedGroups = Array.from(grupoContainer.querySelectorAll('input[type="checkbox"]:checked'))
             .map(cb => cb.value);
         AppState.transaccionSelectedGroups = new Set(currentSelectedGroups);
-        // --- FIN FIX ---
         
         grupoContainer.innerHTML = ''; 
 
-        // Filtrar grupos activos: AHORA INCLUYE CICLA (Correctivo)
         const gruposActivos = AppState.datosActuales.filter(g => g.nombre !== 'Banco');
 
         gruposActivos.forEach(grupo => {
@@ -1854,11 +1845,9 @@ const AppUI = {
             input.className = "h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-600 bg-white group-checkbox";
             input.addEventListener('change', AppUI.populateUsuariosTransaccion);
             
-            // --- FIX: Restaurar la selección de grupos ---
             if (AppState.transaccionSelectedGroups.has(grupo.nombre)) {
                 input.checked = true;
             }
-            // --- FIN FIX ---
 
             const label = document.createElement('label');
             label.htmlFor = input.id;
@@ -1870,8 +1859,6 @@ const AppUI = {
             grupoContainer.appendChild(div);
         });
 
-        
-        // Lógica para repoblar usuarios inmediatamente si hay grupos seleccionados
         AppUI.populateUsuariosTransaccion();
         
         document.getElementById('tesoreria-saldo-transaccion').textContent = `(Fondos disponibles: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
@@ -1883,23 +1870,19 @@ const AppUI = {
         
         const listaContainer = document.getElementById('transaccion-lista-usuarios-container');
         
-        // --- FIX: Capturar el estado de selección de usuarios actual ---
         const currentSelectedUsers = Array.from(listaContainer.querySelectorAll('input[type="checkbox"]:checked'))
             .map(cb => cb.value);
         AppState.transaccionSelectedUsers = new Set(currentSelectedUsers);
-        // --- FIN FIX ---
 
         listaContainer.innerHTML = ''; 
 
         if (selectedGroupNames.length === 0) {
             listaContainer.innerHTML = '<span class="text-sm text-slate-500 p-2">Seleccione un grupo...</span>';
-            // Al deseleccionar todos los grupos, limpiar el set de usuarios
             AppState.transaccionSelectedUsers.clear();
             AppState.transaccionSelectAll = {};
             return;
         }
         
-        // Usar los datos de AppState.datosActuales (grupos activos + Cicla)
         const allGroups = AppState.datosActuales;
 
         selectedGroupNames.forEach(grupoNombre => {
@@ -1934,7 +1917,6 @@ const AppUI = {
                     input.className = "h-4 w-4 text-amber-600 border-slate-300 rounded focus:ring-amber-600 bg-white user-checkbox";
                     input.dataset.checkboxGrupo = grupo.nombre; 
                     
-                    // --- FIX: Restaurar la selección de usuarios y actualizar Set en vivo ---
                     if (AppState.transaccionSelectedUsers.has(usuario.nombre)) {
                         input.checked = true;
                     }
@@ -1944,13 +1926,11 @@ const AppUI = {
                              AppState.transaccionSelectedUsers.add(usuario.nombre);
                          } else {
                              AppState.transaccionSelectedUsers.delete(usuario.nombre);
-                             // Si un usuario se desmarca manualmente, desactiva el SelectAll para ese grupo
                              AppState.transaccionSelectAll[grupo.nombre] = false;
                              const selectAllBtn = listaContainer.querySelector(`.select-all-users-btn[data-grupo="${grupo.nombre}"]`);
                              if (selectAllBtn) selectAllBtn.textContent = "Todos";
                          }
                     });
-                    // --- FIN FIX ---
 
                     const label = document.createElement('label');
                     label.htmlFor = input.id;
@@ -1975,7 +1955,6 @@ const AppUI = {
         const grupoNombre = btn.dataset.grupo;
         if (!grupoNombre) return;
 
-        // Invertir el estado de selección global del grupo
         AppState.transaccionSelectAll[grupoNombre] = !AppState.transaccionSelectAll[grupoNombre];
         const isChecked = AppState.transaccionSelectAll[grupoNombre];
 
@@ -1987,7 +1966,6 @@ const AppUI = {
             cb.checked = isChecked;
         });
 
-        // --- FIX: Sincronizar AppState.transaccionSelectedUsers ---
         if (grupoData && grupoData.usuarios) {
             grupoData.usuarios.forEach(usuario => {
                 if (isChecked) {
@@ -1997,7 +1975,6 @@ const AppUI = {
                 }
             });
         }
-        // --- FIN FIX ---
         
         btn.textContent = isChecked ? "Ninguno" : "Todos";
     },
@@ -2007,7 +1984,6 @@ const AppUI = {
         const indicator = document.getElementById('status-indicator');
         if (!dot) return;
         
-        // Evitar manipulación del DOM si el título (estado) es el mismo
         if (indicator.title === title) return;
 
         indicator.title = title;
@@ -2016,16 +1992,12 @@ const AppUI = {
         dot.className = 'w-3 h-3 rounded-full'; 
 
         if (status === 'ok') {
-            // Éxito: Ámbar Fijo (Amber-600)
             dot.classList.add('bg-amber-600'); 
         } else if (status === 'loading') {
-            // Cargando: Ámbar (Amber-500) con animación
             dot.classList.add('bg-amber-500', 'animate-pulse');
         } else if (status === 'error') {
-            // Error: Gris Oscuro (Slate-500)
             dot.classList.add('bg-slate-500'); 
         } else {
-            // Default/Standby: Gris Claro (Slate-300)
             dot.classList.add('bg-slate-300');
         }
     },
@@ -2044,7 +2016,6 @@ const AppUI = {
 
         if (AppState.isSidebarOpen) {
             sidebar.classList.remove('-translate-x-full');
-            // Mostrar overlay y habilitar interacción solo en móvil
             if (window.innerWidth < 1024) { 
                  sidebarOverlay.classList.remove('hidden', 'opacity-0');
                  sidebarOverlay.classList.add('opacity-100');
@@ -2052,7 +2023,6 @@ const AppUI = {
         } else {
             sidebar.classList.add('-translate-x-full');
             
-            // Ocultar overlay
             sidebarOverlay.classList.remove('opacity-100');
             sidebarOverlay.classList.add('opacity-0');
             setTimeout(() => {
@@ -2069,7 +2039,6 @@ const AppUI = {
             clearTimeout(AppState.sidebarTimer);
         }
         
-        // Solo aplicar el timer de cierre automático en desktop (lg)
         if (AppState.isSidebarOpen && window.innerWidth >= 1024) {
             AppState.sidebarTimer = setTimeout(() => {
                 if (AppState.isSidebarOpen) {
@@ -2236,7 +2205,6 @@ const AppUI = {
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
         
         const studentsWithCapital = allStudents.map(student => {
-            // Solo se cuenta el capital de los depósitos activos
             const totalInvertidoDepositos = depositosActivos
                 .filter(deposito => (deposito.alumno || '').trim() === (student.nombre || '').trim() && deposito.estado.startsWith('Activo'))
                 .reduce((sum, deposito) => sum + (Number(deposito.monto) || 0), 0);
@@ -2389,77 +2357,110 @@ const AppUI = {
         document.getElementById('home-modules-grid').classList.add('hidden');
     },
     
+    // --- LÓGICA DE CONTADOR INTELIGENTE ---
     updateCountdown: function() {
-        const getLastThursday = (year, month) => {
-            const lastDayOfMonth = new Date(year, month + 1, 0);
-            let lastThursday = new Date(lastDayOfMonth);
-            lastThursday.setDate(lastThursday.getDate() - (lastThursday.getDay() + 3) % 7);
-            return lastThursday;
-        };
-
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        let storeDay = getLastThursday(currentYear, currentMonth); 
+        let targetDate;
+        let isManualDate = false;
 
-        const storeOpen = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 0, 0, 0); 
-        const storeClose = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 23, 59, 59); 
+        // 1. Revisar si hay fecha manual configurada
+        if (AppState.tienda.nextOpeningDate) {
+            const manualDate = new Date(AppState.tienda.nextOpeningDate);
+            if (!isNaN(manualDate.getTime())) {
+                targetDate = manualDate;
+                isManualDate = true;
+            }
+        }
 
+        // 2. Si no hay manual, usar lógica automática (Último Jueves)
+        if (!targetDate) {
+            const getLastThursday = (year, month) => {
+                const lastDayOfMonth = new Date(year, month + 1, 0);
+                let lastThursday = new Date(lastDayOfMonth);
+                lastThursday.setDate(lastThursday.getDate() - (lastThursday.getDay() + 3) % 7);
+                lastThursday.setHours(0, 0, 0, 0); // Inicio del día
+                return lastThursday;
+            };
+
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            let autoDate = getLastThursday(currentYear, currentMonth);
+            
+            // Si el jueves de este mes ya pasó (y se acabó el día), buscar el del siguiente
+            const endOfAutoDate = new Date(autoDate);
+            endOfAutoDate.setHours(23, 59, 59, 999);
+
+            if (now > endOfAutoDate) {
+                autoDate = getLastThursday(currentYear, currentMonth + 1);
+            }
+            targetDate = autoDate;
+        }
+
+        // 3. Definir estado de apertura basado en Manual Status vs Tiempo
         const timerEl = document.getElementById('countdown-timer');
-        const messageEl = document.getElementById('store-message'); 
-        
-        const f = (val) => String(val).padStart(2, '0');
-
+        const messageEl = document.getElementById('store-message');
         const manualStatus = AppState.tienda.storeManualStatus;
-        
-        
+
+        // Prioridad 1: Estado Manual Forzado
         if (manualStatus === 'open') {
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
-            messageEl.textContent = "Tienda Abierta"; 
+            messageEl.textContent = "Tienda Abierta";
             AppState.tienda.isStoreOpen = true;
-
         } else if (manualStatus === 'closed') {
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
-            messageEl.textContent = "Tienda Cerrada"; 
+            messageEl.textContent = "Tienda Cerrada";
             AppState.tienda.isStoreOpen = false;
-
         } else {
-            if (now >= storeOpen && now <= storeClose) { 
+            // Prioridad 2: Automático (por fecha target)
+            // Calculamos ventana de apertura
+            
+            let startTime = new Date(targetDate);
+            let endTime = new Date(targetDate);
+            
+            if (isManualDate) {
+                // Si es fecha manual, asumimos que abre a esa hora y dura 24h por defecto
+                endTime.setTime(startTime.getTime() + (24 * 60 * 60 * 1000));
+            } else {
+                // Auto: Jueves 00:00 a Jueves 23:59
+                startTime.setHours(0, 0, 0, 0);
+                endTime.setHours(23, 59, 59, 999);
+            }
+
+            if (now >= startTime && now < endTime) {
                 timerEl.classList.add('hidden');
                 messageEl.classList.remove('hidden');
                 messageEl.textContent = "Tienda Abierta"; 
                 AppState.tienda.isStoreOpen = true;
             } else {
                 timerEl.classList.remove('hidden');
-                messageEl.classList.add('hidden'); 
+                messageEl.classList.add('hidden');
+                AppState.tienda.isStoreOpen = false;
 
-                let targetDate = storeOpen; 
-                if (now > storeClose) { 
-                    targetDate = getLastThursday(currentYear, currentMonth + 1);
-                    targetDate.setHours(0, 0, 0, 0); 
+                // Calcular distancia
+                let distance = startTime - now;
+                if (distance < 0) {
+                    // Si ya pasó la fecha, mostrar 00:00:00
+                    distance = 0;
                 }
 
-                const distance = targetDate - now;
-                
+                const f = (val) => String(val).padStart(2, '0');
                 const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
                 const hours = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
                 const minutes = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
-                
+
                 const daysEl = document.getElementById('days');
                 const hoursEl = document.getElementById('hours');
                 const minutesEl = document.getElementById('minutes');
-                
+
                 if(daysEl) daysEl.textContent = days;
                 if(hoursEl) hoursEl.textContent = hours;
                 if(minutesEl) minutesEl.textContent = minutes;
-
-
-                AppState.tienda.isStoreOpen = false;
             }
         }
-
+        
+        // Actualizar botones UI
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
             AppUI.updateTiendaButtonStates();
             AppUI.updateTiendaAdminStatusLabel();
@@ -2498,19 +2499,15 @@ const AppUI = {
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos, Tienda) ---
+// --- OBJETO TRANSACCIONES ---
 const AppTransacciones = {
     
-    // ===================================================================
-    // CORRECCIÓN DE SEGURIDAD Y FEEDBACK VISUAL: Admin Login
-    // ===================================================================
     verificarClaveMaestra: async function() {
         const claveInput = document.getElementById('clave-input');
         const submitBtn = document.getElementById('modal-submit');
-        const originalText = "Acceder"; // Texto base
+        const originalText = "Acceder"; 
         const clave = claveInput.value;
         
-        // Limpiar estado previo
         claveInput.classList.remove('shake');
         
         if (!clave) {
@@ -2535,21 +2532,16 @@ const AppTransacciones = {
             });
 
             if (result.success) {
-                // FEEDBACK DE ÉXITO (Mismo estilo, solo texto afirmativo)
                 submitBtn.textContent = '¡Acceso Concedido!';
-                
-                // Pequeña pausa para que el usuario lea el éxito
                 setTimeout(() => {
                     AppUI.hideModal('gestion-modal');
                     AppUI.showTransaccionModal('transaccion'); 
                     claveInput.value = '';
-                    // Restaurar botón al cerrar
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                 }, 1000);
 
             } else {
-                // FEEDBACK DE ERROR (Texto y Vibración Ámbar)
                 submitBtn.textContent = 'Clave Incorrecta';
                 claveInput.classList.add('shake');
                 claveInput.focus();
@@ -2562,7 +2554,7 @@ const AppTransacciones = {
             }
         } catch (error) {
             claveInput.classList.add('shake');
-            console.error("Error al verificar clave con Apps Script:", error);
+            console.error("Error al verificar clave:", error);
             submitBtn.textContent = 'Error de Conexión';
             
             setTimeout(() => {
@@ -2572,8 +2564,6 @@ const AppTransacciones = {
             }, 1500);
         }
     },
-    // ===================================================================
-
 
     checkLoanEligibility: function(student, montoSolicitado) {
         if (student.pinceles < 0) {
@@ -2612,6 +2602,7 @@ const AppTransacciones = {
         }
     },
     
+    // ... Funciones de Transacción Mantenidas ...
     solicitarPrestamoFlexible: async function() {
         const btn = document.getElementById('prestamo-submit-btn');
         const statusMsg = document.getElementById('prestamo-status-msg');
@@ -2640,14 +2631,12 @@ const AppTransacciones = {
             if (!elegibilidad.isEligible) errorValidacion = `No elegible: ${elegibilidad.message}`;
         }
         
-        // CORRECCIÓN: Si hay error de clave, quitamos el efecto visual después de 1 segundo
         if (claveInput.classList.contains('shake')) {
              setTimeout(() => claveInput.classList.remove('shake'), 1000);
         }
         if (document.getElementById('prestamo-search-alumno').classList.contains('shake')) {
              setTimeout(() => document.getElementById('prestamo-search-alumno').classList.remove('shake'), 1000);
         }
-
 
         if (errorValidacion) {
             AppTransacciones.setError(statusMsg, errorValidacion);
@@ -2696,7 +2685,6 @@ const AppTransacciones = {
         const btnText = document.getElementById('deposito-btn-text');
         const claveInput = document.getElementById('deposito-clave-p2p');
 
-
         const alumnoNombre = document.getElementById('deposito-search-alumno').value.trim();
         const claveP2P = claveInput.value;
         const montoSolicitado = parseInt(document.getElementById('deposito-monto-input').value);
@@ -2719,14 +2707,12 @@ const AppTransacciones = {
             if (!elegibilidad.isEligible) errorValidacion = `No elegible: ${elegibilidad.message}`;
         }
         
-        // CORRECCIÓN: Si hay error de clave, quitamos el efecto visual después de 1 segundo
         if (claveInput.classList.contains('shake')) {
              setTimeout(() => claveInput.classList.remove('shake'), 1000);
         }
         if (document.getElementById('deposito-search-alumno').classList.contains('shake')) {
              setTimeout(() => document.getElementById('deposito-search-alumno').classList.remove('shake'), 1000);
         }
-
 
         if (errorValidacion) {
             AppTransacciones.setError(statusMsg, errorValidacion);
@@ -2787,15 +2773,11 @@ const AppTransacciones = {
         
         setTimeout(() => cantidadInput.classList.remove('shake'), 1000);
 
-
-        // --- FIX: Obtener usuarios seleccionados desde el estado ---
         const selectedUsersArray = Array.from(AppState.transaccionSelectedUsers);
         const checkedUsersCount = selectedUsersArray.length;
-        // --- FIN FIX ---
         
         const groupedSelections = {};
         
-        // Re-agrupar los usuarios seleccionados por su grupo
         selectedUsersArray.forEach(nombre => {
             const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === nombre);
             if (student) {
@@ -2826,13 +2808,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'transaccion_multiple', 
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, sino la que pasó la verificación inicial.
-                // Como esta es una acción posterior a la autenticación, asumimos que el backend puede validar la sesión o el token.
-                // Sin embargo, para fines de Apps Script, debemos enviar la clave maestra.
-                // NOTA: En un entorno de producción seguro, esto se haría con un token de sesión. Aquí, por la restricción de Apps Script, se asume que el usuario REINGRESÓ la clave en un modal previo o que el backend tiene un mecanismo de validación posterior.
-                // Ya que la clave no está en el frontend, y el usuario no la reingresa, *no podemos enviarla*. Asumiremos que el Apps Script usa `e.parameter.accion` y que la función de *Acción Múltiple* puede prescindir de la clave por ser un entorno de admin (siempre y cuando el Apps Script lo permita). 
-                // SIN EMBARGO, el código original tenía 'clave: AppConfig.CLAVE_MAESTRA'. Para evitar romper el backend del usuario, se simulará una clave fija.
-                // **La clave ya se verificó con verificarClaveMaestra()**, por lo que usaremos un placeholder aquí o asumiremos que el backend lo maneja. Usaremos un placeholder seguro para no fallar el JSON.
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 cantidad: pinceles, 
                 transacciones: transacciones 
@@ -2852,11 +2827,9 @@ const AppTransacciones = {
             cantidadInput.value = "";
             document.getElementById('transaccion-calculo-impuesto').textContent = "";
             
-            // --- FIX: Limpiar el estado de selección después de una transacción exitosa ---
             AppState.transaccionSelectedGroups.clear();
             AppState.transaccionSelectedUsers.clear();
             AppState.transaccionSelectAll = {};
-            // --- FIN FIX ---
             
             AppData.cargarDatos(false); 
             AppUI.populateGruposTransaccion(); 
@@ -2884,11 +2857,8 @@ const AppTransacciones = {
         const claveP2P = claveInput.value;
         const cantidad = parseInt(cantidadInput.value, 10);
         
-        const estudianteOrigen = AppState.currentSearch.p2pOrigen.info;
-
         let errorValidacion = "";
         
-        // Limpiar estilos de error previos
         origenInput.classList.remove('shake');
         claveInput.classList.remove('shake');
         destinoInput.classList.remove('shake');
@@ -2915,7 +2885,6 @@ const AppTransacciones = {
             destinoInput.classList.add('shake');
         }
         
-        // CORRECCIÓN: Remover las clases shake después de 1 segundo
         setTimeout(() => {
             origenInput.classList.remove('shake');
             claveInput.classList.remove('shake');
@@ -2973,7 +2942,6 @@ const AppTransacciones = {
         const clickedBtn = listContainer.querySelector(`[data-bono-clave="${bonoClave}"]`);
         
         if (clickedBtn) {
-            // Se asume que el botón tiene un span.btn-text dentro para el estado de carga
             AppTransacciones.setLoadingState(clickedBtn, clickedBtn.querySelector('.btn-text'), true, 'Cargando...');
         }
 
@@ -2988,10 +2956,8 @@ const AppTransacciones = {
         }
 
         if (clickedBtn) {
-            // Restablecer el estado de carga del botón después de un breve retraso
             setTimeout(() => {
                 AppTransacciones.setLoadingState(clickedBtn, clickedBtn.querySelector('.btn-text'), false, 'Canjear');
-                // Si la validación falló después del retraso, el botón debe quedar deshabilitado.
                 if (bono.usos_actuales >= bono.usos_totales || (bono.expiracion_fecha && new Date(bono.expiracion_fecha).getTime() < Date.now())) {
                     clickedBtn.disabled = true;
                     clickedBtn.classList.add('bg-slate-100', 'text-slate-600', 'border-slate-300', 'cursor-not-allowed', 'shadow-none');
@@ -3018,7 +2984,6 @@ const AppTransacciones = {
 
         let errorValidacion = "";
         
-        // Limpiar estilos de error previos
         claveInput.classList.remove('shake');
         document.getElementById('bono-search-alumno-step2').classList.remove('shake');
 
@@ -3042,7 +3007,6 @@ const AppTransacciones = {
             }
         }
         
-        // CORRECCIÓN: Si hay error de clave/alumno, quitamos el efecto visual después de 1 segundo
         if (claveInput.classList.contains('shake')) {
              setTimeout(() => claveInput.classList.remove('shake'), 1000);
         }
@@ -3075,7 +3039,6 @@ const AppTransacciones = {
                 throw new Error(result.message || "Error desconocido de la API.");
             }
             
-            // FIX: Usar 'bonos-modal' para que el nuevo showSuccessSummary maneje la excepción correctamente
             AppUI.showSuccessSummary('bonos-modal', {
                 ...result,
                 recompensa: bono.recompensa,
@@ -3113,7 +3076,6 @@ const AppTransacciones = {
 
         let errorValidacion = "";
         
-        // Limpiar estilos de error previos
         clave.classList.remove('shake');
         nombre.classList.remove('shake');
         recompensa.classList.remove('shake');
@@ -3133,7 +3095,6 @@ const AppTransacciones = {
             usos_totales.classList.add('shake');
         }
         
-        // CORRECCIÓN: Quitar el efecto visual después de 1 segundo
         setTimeout(() => {
             clave.classList.remove('shake');
             nombre.classList.remove('shake');
@@ -3153,7 +3114,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'admin_crear_bono',
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, se usa un placeholder para Apps Script
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 bono: {
                     clave: clave.value.toUpperCase(),
@@ -3195,7 +3155,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'admin_eliminar_bono',
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, se usa un placeholder para Apps Script
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 claveBono: claveBono
             };
@@ -3264,7 +3223,6 @@ const AppTransacciones = {
 
         let errorValidacion = "";
         
-        // Limpiar estilos de error previos
         claveInput.classList.remove('shake');
         document.getElementById('tienda-search-alumno-step2').classList.remove('shake');
 
@@ -3295,7 +3253,6 @@ const AppTransacciones = {
             }
         }
         
-        // CORRECCIÓN: Si hay error de clave/alumno, quitamos el efecto visual después de 1 segundo
         if (claveInput.classList.contains('shake')) {
              setTimeout(() => claveInput.classList.remove('shake'), 1000);
         }
@@ -3376,7 +3333,6 @@ const AppTransacciones = {
         
         let errorValidacion = "";
         
-        // Limpiar estilos de error previos
         itemIdInput.classList.remove('shake');
         nombreInput.classList.remove('shake');
         precioInput.classList.remove('shake');
@@ -3396,7 +3352,6 @@ const AppTransacciones = {
             stockInput.classList.add('shake');
         }
         
-        // CORRECCIÓN: Quitar el efecto visual después de 1 segundo
         setTimeout(() => {
             itemIdInput.classList.remove('shake');
             nombreInput.classList.remove('shake');
@@ -3416,7 +3371,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'admin_crear_item_tienda',
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, se usa un placeholder para Apps Script
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 item: item
             };
@@ -3452,7 +3406,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'admin_eliminar_item_tienda',
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, se usa un placeholder para Apps Script
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 itemId: itemId
             };
@@ -3487,7 +3440,6 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'admin_toggle_store',
-                // CORRECCIÓN: La clave no debe ser fija en el frontend, se usa un placeholder para Apps Script
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
                 status: status
             };
@@ -3512,37 +3464,95 @@ const AppTransacciones = {
             document.getElementById('tienda-force-auto-btn').disabled = false;
         }
     },
+    
+    // --- NUEVO: FUNCIONES PARA GUARDAR LA FECHA DE APERTURA ---
+    guardarFechaApertura: async function() {
+        const dateInput = document.getElementById('tienda-admin-date-input');
+        const statusMsg = document.getElementById('tienda-date-status-msg');
+        
+        if (!dateInput.value) {
+            AppTransacciones.setError(statusMsg, "Seleccione una fecha válida.", 'text-red-600', false);
+            return;
+        }
+        
+        AppTransacciones.setLoading(statusMsg, 'Guardando fecha...');
+        
+        try {
+            // Convertir a formato seguro (ISO) para el backend
+            // El input devuelve YYYY-MM-DDTHH:MM, lo convertimos a ISO completo
+            const dateObj = new Date(dateInput.value);
+            const isoString = dateObj.toISOString(); 
 
-    // BLINDAJE 2: Función de Fetch que maneja errores de HTML/Fetch
+            const payload = {
+                accion: 'admin_set_store_date',
+                clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER',
+                date: isoString
+            };
+
+            const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!result.success) {
+                throw new Error(result.message || "Error al guardar fecha.");
+            }
+            
+            AppTransacciones.setSuccess(statusMsg, "¡Fecha guardada!");
+            AppData.cargarDatos(false); 
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message, 'text-red-600', false);
+        }
+    },
+
+    borrarFechaApertura: async function() {
+        const statusMsg = document.getElementById('tienda-date-status-msg');
+        AppTransacciones.setLoading(statusMsg, 'Borrando fecha...');
+        
+        try {
+            const payload = {
+                accion: 'admin_set_store_date',
+                clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER',
+                date: '' // Cadena vacía para borrar
+            };
+
+            const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!result.success) {
+                throw new Error(result.message || "Error al borrar fecha.");
+            }
+            
+            AppTransacciones.setSuccess(statusMsg, "Fecha borrada. Usando modo Auto.");
+            document.getElementById('tienda-admin-date-input').value = '';
+            AppData.cargarDatos(false); 
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message, 'text-red-600', false);
+        }
+    },
+
     fetchWithExponentialBackoff: async function(url, options, maxRetries = 5, initialDelay = 1000) {
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 const response = await fetch(url, options);
                 
-                // Si la respuesta no es 200/OK, o si es 429, retry
                 if (!response.ok || response.status === 429) {
-                     // Intenta leer el texto para ver si es un error legible o HTML
                     const text = await response.text();
-                    
                     try {
                         const json = JSON.parse(text);
-                        // Si es JSON, pero reporta un error (success: false), lo devolvemos para ser manejado.
                         if (json.error || json.success === false) return json;
-                        // Si es JSON y está ok, lo devolvemos.
                         if (json.success === true) return json;
-                        
                     } catch (e) {
-                         // Falló el parseo: Es probable que sea HTML de error.
-                         // Lanzamos un error genérico para que intente el reintento o falle graciosamente.
                          console.error("Fetch Error: Respuesta no es JSON y falló la conexión o el backend.", text.substring(0, 100));
                          throw new Error(`Error de comunicación: La API devolvió un formato inesperado.`);
                     }
-                    
                 } else {
-                    // Respuesta 200 OK y no 429
                     const text = await response.text();
                     try {
-                        // Si llegó aquí, es casi seguro que es JSON válido
                         return JSON.parse(text);
                     } catch (e) {
                          console.error("Fetch Error: Falló el parseo final de JSON.", text.substring(0, 100));
@@ -3682,7 +3692,6 @@ const AppContent = {
 
 function escapeHTML(str) {
     if (typeof str !== 'string') return str;
-    // Escapar comillas simples para ser usado en atributos onclick
     return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 }
 
@@ -3702,11 +3711,12 @@ window.AppTransacciones.toggleStoreManual = AppTransacciones.toggleStoreManual;
 window.AppTransacciones.iniciarCompra = AppTransacciones.iniciarCompra;
 window.AppTransacciones.iniciarCanje = AppTransacciones.iniciarCanje;
 window.AppUI.showLegalModal = AppUI.showLegalModal; 
+window.AppTransacciones.guardarFechaApertura = AppTransacciones.guardarFechaApertura;
+window.AppTransacciones.borrarFechaApertura = AppTransacciones.borrarFechaApertura;
 
 window.onload = function() {
     AppUI.init();
     
-    // Configuración de la animación de relleno del slider
     const setupSliderFill = () => {
         const inputs = document.querySelectorAll('input[type="range"]');
         inputs.forEach(input => {
@@ -3716,26 +3726,20 @@ window.onload = function() {
         });
     };
     
-    // Inicializa el carrusel al primer slide
     AppUI.goToHeroSlide(0); 
 
     setTimeout(() => {
-        // Asegurar que los sliders se inicialicen y los listeners de pestañas funcionen después de la carga inicial
         setupSliderFill();
         
-        // Listener delegado para el modal combinado (para pestañas y cerrar al hacer clic en fondo)
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => {
-             // 1. Manejo de cambio de pestaña
              if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {
                  AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
              }
-             // 2. Manejo de cierre al hacer click en el fondo (ya está en init, pero se mantiene la lógica defensiva)
              if (e.target.id === 'transacciones-combinadas-modal') {
                  AppUI.hideModal('transacciones-combinadas-modal');
              }
         });
 
-        // Vuelve a aplicar el relleno del slider si la pestaña cambia DENTRO del modal combinado
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => {
             if (e.target.classList.contains('tab-btn')) {
                  setTimeout(setupSliderFill, 10);
@@ -3744,9 +3748,7 @@ window.onload = function() {
         
     }, 500); 
     
-    // Inicia la animación shimmer y los puntos modernos al cargar el script
     document.querySelectorAll('.loading-shimmer-text, .loading-dot').forEach(el => {
-        // La animación está pausada por CSS, la iniciamos aquí.
         el.style.animationPlayState = 'running';
     });
 
