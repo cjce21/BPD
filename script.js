@@ -1,9 +1,9 @@
 // --- CONFIGURACIÓN ---
 const AppConfig = {
     // Asegúrate de que esta URL sea la correcta del despliegue de tu Apps Script
-    API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
-    TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec', // Usar URL correcta para Admin
-    SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit?usp=sharing',
+    API_URL: 'https://script.google.com/macros/s/AKfycbxAzUVHsXNAVfgN52wYffigQL3lZmKZZ81723-FWBwWU-oc4KDZe1F8RXIZBUk_v2c_2Q/exec',
+    TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbxAzUVHsXNAVfgN52wYffigQL3lZmKZZ81723-FWBwWU-oc4KDZe1F8RXIZBUk_v2c_2Q/exec', // Usar URL correcta para Admin
+    SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1Ji7Dbx5NLEjC4Sl5xQ20zdecnwjjEm0Lb9l2xIqp7XM/edit?usp=sharing',
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
     MAX_RETRIES: 5,
