@@ -10,7 +10,7 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v33.4 (Donaciones sin Descripción + Hero)', // Versión actualizada
+    APP_VERSION: 'v33.5', // Versión actualizada
     
     IMPUESTO_P2P_TASA: 0.01,        
     IMPUESTO_DEPOSITO_TASA: 0.0,    
