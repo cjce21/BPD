@@ -10,7 +10,7 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v33.0 (Manual Date)', // Versión actualizada
+    APP_VERSION: 'v33.4 (Donaciones sin Descripción + Hero)', // Versión actualizada
     
     IMPUESTO_P2P_TASA: 0.01,        
     IMPUESTO_DEPOSITO_TASA: 0.0,    
@@ -29,6 +29,9 @@ const AppConfig = {
     DEPOSITO_MIN_MONTO: 50000,
     DEPOSITO_MIN_PLAZO_DIAS: 7,
     DEPOSITO_MAX_PLAZO_DIAS: 30,
+    
+    // NUEVO: Donaciones
+    DONACION_MIN_APORTE: 100,
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -39,7 +42,8 @@ const AppState = {
         prestamosActivos: [],
         depositosActivos: [],
         allStudents: [], 
-        allGroups: [] 
+        allGroups: [],
+        allGroupAndStudents: [] // Lista plana de todos (grupos y alumnos) para Beneficiario de Causa
     },
     actualizacionEnProceso: false,
     retryCount: 0,
@@ -64,7 +68,9 @@ const AppState = {
         bonoAlumno: { query: '', selected: null, info: null },
         tiendaAlumno: { query: '', selected: null, info: null },
         prestamoAlumno: { query: '', selected: null, info: null }, 
-        depositoAlumno: { query: '', selected: null, info: null } 
+        depositoAlumno: { query: '', selected: null, info: null },
+        causaDonante: { query: '', selected: null, info: null }, 
+        causaAdminBeneficiario: { query: 'Banco', selected: 'Banco', info: { nombre: 'Banco', grupoNombre: 'Banco' } }, 
     },
     
     bonos: {
@@ -77,12 +83,18 @@ const AppState = {
         items: {},
         isStoreOpen: false,
         storeManualStatus: 'auto',
-        nextOpeningDate: null, // NUEVO: Almacena la fecha manual de apertura
+        nextOpeningDate: null, 
         selectedItem: null,
     },
     
+    // NUEVO: Módulo de Causas
+    causas: {
+        items: {},
+        selectedCausa: null,
+    },
+
     heroSlideIndex: 0,
-    heroSlideCount: 6, 
+    heroSlideCount: 7, // Ajustado a 7 slides (0, 1, 2, 3, 4, 5, 6)
 };
 
 // --- AUTENTICACIÓN ---
@@ -185,6 +197,9 @@ const AppData = {
         AppState.tienda.items = data.tiendaStock || {};
         AppState.tienda.storeManualStatus = data.storeManualStatus || 'auto';
         
+        // NUEVO: Carga de Causas
+        AppState.causas.items = data.causasDisponibles || {};
+        
         // NUEVO: Procesar fecha de apertura programada
         AppState.tienda.nextOpeningDate = data.storeNextOpening || null; 
         
@@ -194,13 +209,15 @@ const AppData = {
         const ciclaGroup = gruposOrdenados.find(g => g.nombre === 'Cicla');
         const activeGroups = gruposOrdenados.filter(g => g.nombre !== 'Cicla' && g.nombre !== 'Banco');
 
+        // Todos los alumnos
         AppState.datosAdicionales.allStudents = activeGroups.flatMap(g => g.usuarios).concat(ciclaGroup ? ciclaGroup.usuarios : []);
         
         activeGroups.forEach(g => g.usuarios.forEach(u => u.grupoNombre = g.nombre));
         if (ciclaGroup) ciclaGroup.usuarios.forEach(u => u.grupoNombre = 'Cicla');
         
+        // Todos los nombres de grupos (excluyendo 'Banco')
         AppState.datosAdicionales.allGroups = gruposOrdenados.map(g => g.nombre).filter(n => n !== 'Banco');
-
+        
         const currentGroupsHash = AppState.datosAdicionales.allGroups.join('|');
         if (currentGroupsHash !== AppState.lastKnownGroupsHash) {
             AppUI.populateAdminGroupCheckboxes('bono-admin-grupos-checkboxes-container', 'bonos');
@@ -232,16 +249,19 @@ const AppData = {
         // Actualización de Modales
         const isBonoModalOpen = document.getElementById('bonos-modal').classList.contains('opacity-0') === false;
         const isTiendaModalOpen = document.getElementById('tienda-modal').classList.contains('opacity-0') === false;
+        const isDonacionesModalOpen = document.getElementById('donaciones-modal').classList.contains('opacity-0') === false;
         const isTransaccionesCombinadasOpen = document.getElementById('transacciones-combinadas-modal').classList.contains('opacity-0') === false;
         const isAdminModalOpen = document.getElementById('transaccion-modal').classList.contains('opacity-0') === false;
 
         const isReportVisible = document.getElementById('transacciones-combinadas-report-container')?.classList.contains('hidden') === false ||
                                 document.getElementById('bono-report-container')?.classList.contains('hidden') === false ||
                                 document.getElementById('tienda-report-container')?.classList.contains('hidden') === false ||
+                                document.getElementById('donaciones-report-container')?.classList.contains('hidden') === false || // NUEVO
                                 document.getElementById('transaccion-admin-report-container')?.classList.contains('hidden') === false;
         
         if (isBonoModalOpen && !isReportVisible) AppUI.populateBonoList();
         if (isTiendaModalOpen && !isReportVisible) AppUI.renderTiendaItems();
+        if (isDonacionesModalOpen && !isReportVisible) AppUI.renderCausasList(); // NUEVO
         
         if (isTransaccionesCombinadasOpen) {
              AppUI.updatePrestamoCalculadora();
@@ -260,11 +280,12 @@ const AppData = {
             } else if (tabId === 'tienda_gestion' || tabId === 'tienda_inventario') {
                 AppUI.populateTiendaAdminList();
                 AppUI.updateTiendaAdminStatusLabel();
-                // Actualizar el input de fecha si está en la pestaña de gestión
                 if (tabId === 'tienda_gestion') {
                     AppUI.populateTiendaAdminDate();
                 }
-            } 
+            } else if (tabId === 'causas_admin') { // NUEVO
+                AppUI.populateCausasAdminList();
+            }
         }
     }
 };
@@ -286,6 +307,15 @@ const AppUI = {
                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
             });
         });
+        
+        // LISTENERS: NUEVO MODAL DE DONACIONES
+        const donacionesBtn = document.getElementById('donaciones-btn');
+        if (donacionesBtn) {
+            donacionesBtn.addEventListener('click', () => AppUI.showDonacionesModal());
+        }
+        document.getElementById('donaciones-modal-close').addEventListener('click', () => AppUI.hideModal('donaciones-modal'));
+        document.getElementById('donaciones-step-back-btn').addEventListener('click', AppUI.showDonacionesStep1);
+        document.getElementById('donaciones-submit-step2-btn').addEventListener('click', AppTransacciones.confirmarAporte);
         
         // Listeners para Hero Carousel
         document.getElementById('hero-slide-0-next')?.addEventListener('click', () => AppUI.goToHeroSlide(1));
@@ -337,6 +367,7 @@ const AppUI = {
         document.getElementById('transaccion-modal').addEventListener('click', (e) => { if (e.target.id === 'transaccion-modal') AppUI.hideModal('transaccion-modal'); });
         document.getElementById('bonos-modal').addEventListener('click', (e) => { if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal'); });
         document.getElementById('tienda-modal').addEventListener('click', (e) => { if (e.target.id === 'tienda-modal') AppUI.hideModal('tienda-modal'); });
+        document.getElementById('donaciones-modal').addEventListener('click', (e) => { if (e.target.id === 'donaciones-modal') AppUI.hideModal('donaciones-modal'); }); // NUEVO
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => { if (e.target.id === 'transacciones-combinadas-modal') AppUI.hideModal('transacciones-combinadas-modal'); });
         document.getElementById('terminos-modal').addEventListener('click', (e) => { if (e.target.id === 'terminos-modal') AppUI.hideModal('terminos-modal'); });
         
@@ -357,6 +388,10 @@ const AppUI = {
         document.getElementById('tienda-admin-form').addEventListener('submit', (e) => { e.preventDefault(); AppTransacciones.crearActualizarItem(); });
         document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
         
+        // NUEVOS LISTENERS: GESTIÓN DE CAUSAS ADMIN
+        document.getElementById('causa-admin-form').addEventListener('submit', (e) => { e.preventDefault(); AppTransacciones.crearActualizarCausa(); });
+        document.getElementById('causa-admin-clear-btn').addEventListener('click', AppUI.clearCausaAdminForm);
+
         // NUEVOS LISTENERS: GESTIÓN DE FECHA DE APERTURA (TIENDA)
         document.getElementById('tienda-admin-save-date-btn').addEventListener('click', AppTransacciones.guardarFechaApertura);
         document.getElementById('tienda-admin-clear-date-btn').addEventListener('click', AppTransacciones.borrarFechaApertura);
@@ -382,6 +417,11 @@ const AppUI = {
         AppUI.setupSearchInput('prestamo-search-alumno', 'prestamo-origen-results', 'prestamoAlumno', AppUI.selectFlexibleStudent);
         document.getElementById('deposito-search-alumno')?.addEventListener('input', AppUI.updateDepositoCalculadora);
         AppUI.setupSearchInput('deposito-search-alumno', 'deposito-origen-results', 'depositoAlumno', AppUI.selectFlexibleStudent);
+        // NUEVO: Search para Donaciones (Usuario)
+        AppUI.setupSearchInput('causa-search-alumno-step2', 'causa-origen-results-step2', 'causaDonante', AppUI.selectDonacionesStudent);
+        // NUEVO: Search para Causas (Admin Beneficiario)
+        AppUI.setupSearchInput('causa-admin-beneficiario-search', 'causa-admin-beneficiario-results', 'causaAdminBeneficiario', AppUI.selectAdminBeneficiario);
+
 
         AppUI.mostrarVersionApp();
         
@@ -540,6 +580,9 @@ const AppUI = {
         } else if (modalId === 'tienda-modal') {
              formContainerId = 'tienda-main-step-container';
              reportContainerId = 'tienda-report-container';
+        } else if (modalId === 'donaciones-modal') { // NUEVO
+            formContainerId = 'donaciones-main-step-container';
+            reportContainerId = 'donaciones-report-container';
         } else if (modalId === 'transacciones-combinadas-modal') {
             formContainerId = 'transacciones-combinadas-step-container';
             reportContainerId = 'transacciones-combinadas-report-container';
@@ -648,6 +691,28 @@ const AppUI = {
                     </div>
                 `;
                 break;
+            case 'donacion': // NUEVO
+                title = 'Aporte Realizado';
+                const metaAlcanzada = reportData.estado_causa === 'Completada';
+                const estadoClase = metaAlcanzada ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
+
+                detailsHtml = `
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        ${formatCompactStat('Causa', reportData.causa_id)}
+                        ${formatCompactStat('Donado', `${AppFormat.formatNumber(reportData.monto_donado)} ℙ`)}
+                    </div>
+                    <div class="bg-amber-50 p-3 rounded-lg text-center border border-amber-200">
+                        <p class="text-xs text-amber-700 font-semibold uppercase">Recaudado Acumulado</p>
+                        <p class="text-xl font-extrabold text-amber-700 mb-1">${AppFormat.formatNumber(reportData.monto_recaudado)} ℙ</p>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${estadoClase}">
+                           Causa: ${reportData.estado_causa}
+                        </span>
+                    </div>
+                    ${metaAlcanzada ? 
+                        `<p class="mt-3 text-sm font-semibold text-center text-green-700">¡META ALCANZADA! Los fondos serán transferidos al beneficiario.</p>` : ''
+                    }
+                `;
+                break;
             case 'admin_multi':
                 title = 'Transacción Múltiple';
                 const cantidadPorUser = reportData.cantidad_por_usuario;
@@ -715,7 +780,7 @@ const AppUI = {
         }
     },
     
-    // --- FUNCIONES DE MODALES FLEXIBLES (PRESTAMOS Y DEPÓSITOS) ---
+    // --- FUNCIÓNES DE MODALES FLEXIBLES (PRESTAMOS Y DEPÓSITOS) ---
     
     showTransaccionesCombinadasModal: function(initialTab = 'p2p_transfer') {
         if (!AppState.datosActuales) return;
@@ -748,7 +813,7 @@ const AppUI = {
             document.getElementById('p2p-cantidad').value = "";
             AppUI.updateP2PCalculoImpuesto();
             
-            document.getElementById('p2p-clave').classList.remove('shake'); 
+            document.getElementById('p2p-clave').classList.remove('shake');
             document.getElementById('p2p-clave').focus();
         } else if (tabId === 'prestamo_flex') {
             AppUI.resetFlexibleForm('prestamo');
@@ -902,7 +967,7 @@ const AppUI = {
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
         
-        if (modalId === 'transaccion-modal' || modalId === 'transacciones-combinadas-modal' || modalId === 'bonos-modal' || modalId === 'tienda-modal') {
+        if (modalId === 'transaccion-modal' || modalId === 'transacciones-combinadas-modal' || modalId === 'donaciones-modal' || modalId === 'bonos-modal' || modalId === 'tienda-modal') {
              if (AppState.isSidebarOpen) {
                  AppUI.toggleSidebar();
              }
@@ -937,6 +1002,8 @@ const AppUI = {
             document.getElementById('bono-admin-status-msg').textContent = "";
             AppUI.clearTiendaAdminForm();
             document.getElementById('tienda-admin-status-msg').textContent = "";
+            AppUI.clearCausaAdminForm(); // NUEVO
+            document.getElementById('causa-admin-status-msg').textContent = ""; // NUEVO
             
             // Limpiar mensaje de fecha
             document.getElementById('tienda-date-status-msg').textContent = "";
@@ -971,6 +1038,12 @@ const AppUI = {
             document.getElementById('tienda-report-container').classList.add('hidden');
             document.getElementById('tienda-main-step-container').classList.remove('hidden');
             AppUI.showTiendaStep1();
+        }
+        
+        if (modalId === 'donaciones-modal') { // NUEVO
+            document.getElementById('donaciones-report-container').classList.add('hidden');
+            document.getElementById('donaciones-main-step-container').classList.remove('hidden');
+            AppUI.showDonacionesStep1();
         }
         
         if (modalId === 'gestion-modal') {
@@ -1041,9 +1114,12 @@ const AppUI = {
             }
             AppUI.updateTiendaAdminStatusLabel();
             AppUI.clearTiendaAdminForm();
-            AppUI.populateTiendaAdminDate(); // Cargar la fecha guardada
+            AppUI.populateTiendaAdminDate(); 
         } else if (tabId === 'tienda_inventario') { 
             AppUI.populateTiendaAdminList();
+        } else if (tabId === 'causas_admin') { // NUEVO
+            AppUI.populateCausasAdminList();
+            AppUI.clearCausaAdminForm();
         }
         
         document.getElementById('transaccion-status-msg').textContent = "";
@@ -1062,6 +1138,17 @@ const AppUI = {
             AppState.currentSearch[stateKey].query = query;
             AppState.currentSearch[stateKey].selected = null; 
             AppState.currentSearch[stateKey].info = null;
+            
+            // CORRECCIÓN 1: Evitar forzar el reset a 'Banco' al borrar el texto del input Beneficiario Admin
+            if (stateKey === 'causaAdminBeneficiario' && query === '') {
+                 // Si el campo de admin queda vacío, solo se resetea el valor interno (no se fuerza 'Banco' en el input)
+                 AppState.currentSearch.causaAdminBeneficiario.query = '';
+                 AppState.currentSearch.causaAdminBeneficiario.selected = null;
+                 AppState.currentSearch.causaAdminBeneficiario.info = null;
+                 onSelectCallback(null);
+                 if (results) results.classList.add('hidden');
+                 return;
+            }
             
             if (query === '') {
                 onSelectCallback(null);
@@ -1099,41 +1186,102 @@ const AppUI = {
         }
 
         const lowerQuery = query.toLowerCase();
-        let studentList = AppState.datosAdicionales.allStudents;
-        
-        const ciclaAllowed = ['p2pDestino', 'prestamoAlumno', 'depositoAlumno', 'bonoAlumno', 'tiendaAlumno']; 
-        if (!ciclaAllowed.includes(stateKey)) {
-            studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
-        }
-        
-        const filteredStudents = studentList
-            .filter(s => s.nombre.toLowerCase().includes(lowerQuery))
-            .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .slice(0, 10);
+        let searchTargets = [];
 
-        resultsContainer.innerHTML = '';
-        if (filteredStudents.length === 0) {
-            resultsContainer.innerHTML = `<div class="p-2 text-sm text-slate-500">No se encontraron alumnos.</div>`;
-        } else {
-            filteredStudents.forEach(student => {
-                const div = document.createElement('div');
-                div.className = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
-                div.textContent = `${student.nombre} (${student.grupoNombre})`;
-                div.onclick = () => {
-                    const input = document.getElementById(inputId);
-                    input.value = student.nombre;
-                    AppState.currentSearch[stateKey].query = student.nombre;
-                    AppState.currentSearch[stateKey].selected = student.nombre;
-                    AppState.currentSearch[stateKey].info = student;
-                    resultsContainer.classList.add('hidden');
-                    onSelectCallback(student);
-                    
-                    input.classList.remove('shake');
-                };
-                resultsContainer.appendChild(div);
+        // Lógica especial para el Beneficiario Admin
+        if (stateKey === 'causaAdminBeneficiario') {
+             // 1. Añadir BANCO (Tesorería)
+            searchTargets.push({
+                nombre: 'Banco',
+                display: 'Banco (Tesorería)',
+                type: 'Banco',
             });
+            
+            // 2. Añadir ALUMNOS (Nombre)
+            AppState.datosAdicionales.allStudents.forEach(s => {
+                searchTargets.push({
+                    nombre: s.nombre,
+                    display: `${s.nombre} (Alumno: ${s.grupoNombre})`,
+                    type: 'Alumno',
+                });
+            });
+            
+            // 3. Añadir GRUPOS (Prefijo)
+            AppState.datosAdicionales.allGroups.filter(n => n !== 'Cicla' && n !== 'Banco').forEach(g => {
+                searchTargets.push({
+                    nombre: `GRUPO: ${g}`,
+                    display: `GRUPO: ${g}`,
+                    type: 'Grupo',
+                });
+            });
+
+            const filteredTargets = searchTargets
+                .filter(t => t.display.toLowerCase().includes(lowerQuery))
+                .sort((a, b) => a.display.localeCompare(b.display))
+                .slice(0, 10);
+
+            resultsContainer.innerHTML = '';
+            if (filteredTargets.length === 0) {
+                 resultsContainer.innerHTML = `<div class="p-2 text-sm text-slate-500">No se encontraron coincidencias.</div>`;
+            } else {
+                 filteredTargets.forEach(target => {
+                     const div = document.createElement('div');
+                     div.className = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
+                     div.textContent = target.display;
+                     div.onclick = () => {
+                         const input = document.getElementById(inputId);
+                         input.value = target.nombre;
+                         AppState.currentSearch[stateKey].query = target.nombre;
+                         AppState.currentSearch[stateKey].selected = target.nombre;
+                         AppState.currentSearch[stateKey].info = target;
+                         resultsContainer.classList.add('hidden');
+                         onSelectCallback(target);
+                         input.classList.remove('shake');
+                     };
+                     resultsContainer.appendChild(div);
+                 });
+            }
+            resultsContainer.classList.remove('hidden');
+            return;
+
+        } else {
+             // Lógica estándar para búsqueda de alumnos
+             let studentList = AppState.datosAdicionales.allStudents;
+            
+             const ciclaAllowed = ['p2pDestino', 'prestamoAlumno', 'depositoAlumno', 'bonoAlumno', 'tiendaAlumno', 'causaDonante']; 
+             if (!ciclaAllowed.includes(stateKey)) {
+                 studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
+             }
+            
+             const filteredStudents = studentList
+                 .filter(s => s.nombre.toLowerCase().includes(lowerQuery))
+                 .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                 .slice(0, 10);
+
+             resultsContainer.innerHTML = '';
+             if (filteredStudents.length === 0) {
+                 resultsContainer.innerHTML = `<div class="p-2 text-sm text-slate-500">No se encontraron alumnos.</div>`;
+             } else {
+                 filteredStudents.forEach(student => {
+                     const div = document.createElement('div');
+                     div.className = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
+                     div.textContent = `${student.nombre} (${student.grupoNombre})`;
+                     div.onclick = () => {
+                         const input = document.getElementById(inputId);
+                         input.value = student.nombre;
+                         AppState.currentSearch[stateKey].query = student.nombre;
+                         AppState.currentSearch[stateKey].selected = student.nombre;
+                         AppState.currentSearch[stateKey].info = student;
+                         resultsContainer.classList.add('hidden');
+                         onSelectCallback(student);
+                         
+                         input.classList.remove('shake');
+                     };
+                     resultsContainer.appendChild(div);
+                 });
+             }
+             resultsContainer.classList.remove('hidden');
         }
-        resultsContainer.classList.remove('hidden');
     },
 
     resetSearchInput: function(stateKey) {
@@ -1147,24 +1295,37 @@ const AppUI = {
              inputIds.push('bono-search-alumno-step2');
         } else if (stateKey === 'tiendaAlumno') {
              inputIds.push('tienda-search-alumno-step2');
+        } else if (stateKey === 'causaDonante') { // NUEVO
+             inputIds.push('causa-search-alumno-step2');
+        } else if (stateKey === 'causaAdminBeneficiario') { // NUEVO
+             inputIds.push('causa-admin-beneficiario-search');
+             // Resetear al valor por defecto 'Banco'
+             AppState.currentSearch[stateKey].selected = 'Banco';
+             AppState.currentSearch[stateKey].info = { nombre: 'Banco', grupoNombre: 'Banco' };
+             
+             const input = document.getElementById(inputIds[0]);
+             // CORRECCIÓN 1: Si se hace un reset forzado, sí se debe rellenar 'Banco'
+             if(input) input.value = 'Banco'; // Poner valor visible por defecto
         } else {
             return;
         }
         
-        inputIds.forEach(inputId => {
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.value = "";
-                input.classList.remove('shake');
-                const resultsId = input.dataset.resultsId;
-                const results = document.getElementById(resultsId || `${inputId}-results`);
-                if (results) results.classList.add('hidden');
-            }
-        });
-        
-        AppState.currentSearch[stateKey].query = "";
-        AppState.currentSearch[stateKey].selected = null;
-        AppState.currentSearch[stateKey].info = null;
+        if (stateKey !== 'causaAdminBeneficiario') {
+             inputIds.forEach(inputId => {
+                 const input = document.getElementById(inputId);
+                 if (input) {
+                     input.value = "";
+                     input.classList.remove('shake');
+                     const resultsId = input.dataset.resultsId;
+                     const results = document.getElementById(resultsId || `${inputId}-results`);
+                     if (results) results.classList.add('hidden');
+                 }
+             });
+             
+             AppState.currentSearch[stateKey].query = "";
+             AppState.currentSearch[stateKey].selected = null;
+             AppState.currentSearch[stateKey].info = null;
+        }
         
         if (stateKey === 'tiendaAlumno') {
             AppUI.updateTiendaButtonStates();
@@ -1177,6 +1338,17 @@ const AppUI = {
 
     selectTiendaStudent: function(student) {
         AppUI.updateTiendaButtonStates();
+    },
+    
+    selectDonacionesStudent: function(student) { }, // NUEVO: Donante
+
+    selectAdminBeneficiario: function(selection) {
+        // La lógica de actualización de AppState.currentSearch ya está en handleStudentSearch
+        // Si la selección no es válida (ej. el usuario borra el texto), se establece a null en handleStudentSearch
+        if (!selection) {
+            // No hacemos nada, ya que el evento 'input' se encargó de ponerlo en null
+            // y no queremos forzar el texto 'Banco' aquí, solo en resetSearchInput.
+        }
     },
 
     populateAdminGroupCheckboxes: function(containerId, entityType) {
@@ -1658,7 +1830,7 @@ const AppUI = {
         }
     },
     
-    // --- NUEVO: Rellenar el input de fecha del admin ---
+    // --- Rellenar el input de fecha del admin ---
     populateTiendaAdminDate: function() {
         const dateInput = document.getElementById('tienda-admin-date-input');
         if (!dateInput) return;
@@ -1668,7 +1840,6 @@ const AppUI = {
             // Asegurarnos de que el formato sea YYYY-MM-DDTHH:MM
             const d = new Date(AppState.tienda.nextOpeningDate);
             if (!isNaN(d.getTime())) {
-                // Ajuste a local string para el input
                 // datetime-local espera 'YYYY-MM-DDThh:mm'
                 const pad = (n) => n.toString().padStart(2, '0');
                 const localISO = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -1788,6 +1959,224 @@ const AppUI = {
         
         document.getElementById('tienda-admin-itemid-input').classList.remove('disabled:bg-slate-100', 'disabled:opacity-70');
         AppUI.selectAdminGroupCheckboxes('tienda-admin-grupos-checkboxes-container', '');
+    },
+    
+    // --- NUEVAS FUNCIONES DE CAUSAS (ADMIN) ---
+
+    populateCausasAdminList: function() {
+        const tbody = document.getElementById('causas-admin-lista');
+        const causas = AppState.causas.items ? Object.values(AppState.causas.items) : []; 
+
+        if (causas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay causas configuradas.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        const causasOrdenadas = [...causas].sort((a, b) => b.meta_total - a.meta_total);
+
+        causasOrdenadas.forEach(causa => {
+            const recaudado = AppFormat.formatNumber(causa.monto_recaudado);
+            const meta = AppFormat.formatNumber(causa.meta_total);
+            const estado = causa.estado;
+
+            let badgeClass = 'text-slate-600 bg-slate-100';
+            if (estado === 'Activa') badgeClass = 'text-amber-600 bg-amber-50';
+            if (estado === 'Completada') badgeClass = 'text-green-600 bg-green-50';
+            if (estado === 'Cancelada') badgeClass = 'text-red-600 bg-red-50';
+
+            const rowClass = (estado !== 'Activa') ? 'opacity-70 bg-slate-50' : 'hover:bg-slate-100';
+            
+            const idEscapado = escapeHTML(causa.id_causa);
+
+            html += `
+                <tr class="${rowClass}">
+                    <td class="px-4 py-2 text-sm font-semibold text-slate-800">${causa.id_causa}</td>
+                    <td class="px-4 py-2 text-sm text-slate-700">${causa.titulo}</td>
+                    <td class="px-4 py-2 text-sm text-slate-800 text-right">${meta} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-slate-700 text-right">${recaudado} ℙ</td>
+                    <td class="px-4 py-2 text-right text-sm">
+                        <span class="inline-block px-2 py-1 text-xs rounded-full ${badgeClass}">${estado}</span>
+                    </td>
+                    <td class="px-4 py-2 text-right text-sm">
+                        <button onclick="AppUI.handleEditCausa('${idEscapado}')" class="font-medium text-amber-600 hover:text-amber-800 edit-causa-btn">Editar</button>
+                        <button onclick="AppTransacciones.eliminarCausa('${idEscapado}')" class="ml-2 font-medium text-slate-600 hover:text-slate-800 delete-causa-btn">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    },
+
+    handleEditCausa: function(idCausa) {
+        const causa = AppState.causas.items[idCausa];
+        if (!causa) return;
+
+        document.getElementById('causa-admin-id-input').value = causa.id_causa;
+        document.getElementById('causa-admin-titulo-input').value = causa.titulo;
+        document.getElementById('causa-admin-meta-input').value = causa.meta_total;
+        document.getElementById('causa-admin-estado-input').value = causa.estado;
+        
+        // Cargar el Beneficiario
+        const beneficiaryInput = document.getElementById('causa-admin-beneficiario-search');
+        
+        // 1. Establecer el valor visual del input
+        beneficiaryInput.value = causa.beneficiario;
+        
+        // 2. Establecer el estado interno para que el validador funcione
+        AppState.currentSearch.causaAdminBeneficiario.query = causa.beneficiario;
+        AppState.currentSearch.causaAdminBeneficiario.selected = causa.beneficiario;
+        AppState.currentSearch.causaAdminBeneficiario.info = { 
+            nombre: causa.beneficiario, 
+            grupoNombre: causa.beneficiario.startsWith('GRUPO:') ? causa.beneficiario.substring(7).trim() : 'N/A' 
+        };
+        
+
+        document.getElementById('causa-admin-id-input').disabled = true;
+        document.getElementById('causa-admin-id-input').classList.add('disabled:bg-slate-100', 'disabled:opacity-70');
+        document.getElementById('causa-admin-submit-btn').textContent = 'Guardar Cambios';
+
+        document.getElementById('causas-admin-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+    
+    clearCausaAdminForm: function() {
+        document.getElementById('causa-admin-form').reset();
+        document.getElementById('causa-admin-id-input').disabled = false;
+        document.getElementById('causa-admin-submit-btn').textContent = 'Crear / Actualizar Causa';
+        document.getElementById('causa-admin-status-msg').textContent = "";
+        
+        document.getElementById('causa-admin-id-input').classList.remove('disabled:bg-slate-100', 'disabled:opacity-70');
+        
+        // Resetear el buscador de Beneficiario al valor por defecto 'Banco'
+        AppUI.resetSearchInput('causaAdminBeneficiario'); 
+        const input = document.getElementById('causa-admin-beneficiario-search');
+        if(input) input.value = 'Banco';
+    },
+
+    // --- NUEVAS FUNCIONES DE CAUSAS (USUARIO) ---
+    
+    showDonacionesModal: function() {
+        AppUI.showDonacionesStep1();
+        AppUI.showModal('donaciones-modal');
+        AppUI.renderCausasList(); 
+    },
+
+    showDonacionesStep1: function() {
+        document.getElementById('donaciones-step-form-container').classList.add('hidden');
+        document.getElementById('donaciones-step-list-container').classList.remove('hidden');
+        AppState.causas.selectedCausa = null;
+        document.getElementById('donaciones-status-msg').textContent = "";
+        document.getElementById('causa-step2-status-msg').textContent = "";
+        document.getElementById('causa-clave-p2p-step2').value = "";
+        document.getElementById('causa-monto-aporte').value = "";
+        
+        document.getElementById('causa-clave-p2p-step2').classList.remove('shake');
+        
+        AppUI.resetSearchInput('causaDonante');
+        AppTransacciones.setLoadingState(document.getElementById('donaciones-submit-step2-btn'), document.getElementById('donaciones-btn-text-step2'), false, 'Confirmar Aporte');
+    },
+
+    showDonacionesStep2: function(idCausa) {
+        const causa = AppState.causas.items[idCausa];
+        if (!causa) return;
+        if (causa.estado !== 'Activa') {
+             AppTransacciones.setError(document.getElementById('donaciones-status-msg'), `La causa "${causa.titulo}" ya está ${causa.estado.toLowerCase()}.`);
+             return;
+        }
+
+        AppState.causas.selectedCausa = idCausa;
+        document.getElementById('donaciones-step-list-container').classList.add('hidden');
+        document.getElementById('donaciones-step-form-container').classList.remove('hidden');
+        
+        const faltante = Math.max(0, causa.meta_total - causa.monto_recaudado);
+
+        // La ID de la causa no es visible para el alumno, solo el título.
+        document.getElementById('causa-form-title').textContent = `Aportar a: ${causa.titulo}`;
+        document.getElementById('causa-meta-display').textContent = `${AppFormat.formatNumber(causa.meta_total)} ℙ`;
+        document.getElementById('causa-recaudado-display').textContent = `${AppFormat.formatNumber(causa.monto_recaudado)} ℙ`;
+        document.getElementById('causa-faltante-display').textContent = `${AppFormat.formatNumber(faltante)} ℙ`;
+        document.getElementById('causa-id-input-step2').value = idCausa;
+        
+        document.getElementById('causa-monto-aporte').focus();
+        document.getElementById('causa-step2-status-msg').textContent = "";
+        
+        document.getElementById('causa-search-alumno-step2').value = AppState.currentSearch.causaDonante.info?.nombre || '';
+    },
+    
+    renderCausasList: function() {
+        if (!AppState.datosActuales || !AppState.causas.items || Object.keys(AppState.causas.items).length === 0) {
+             const container = document.getElementById('causas-lista-disponible');
+             if(container) container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-4">No hay causas activas en este momento.</p>`;
+             return;
+        }
+
+        if (document.getElementById('donaciones-modal').classList.contains('opacity-0')) return;
+
+        const container = document.getElementById('causas-lista-disponible');
+        const causas = Object.values(AppState.causas.items);
+        
+        const causasActivas = causas.filter(c => c.estado === 'Activa' || c.estado === 'Completada'); // Mostrar completadas para referencia
+
+        if (causasActivas.length === 0) {
+            container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-4">No hay causas activas en este momento.</p>`;
+            return;
+        }
+
+        let html = '';
+        causasActivas.sort((a,b) => b.meta_total - a.meta_total).forEach(causa => {
+            const recaudado = causa.monto_recaudado;
+            const meta = causa.meta_total;
+            const porcentaje = Math.min(100, (recaudado / meta) * 100).toFixed(0);
+            const faltante = Math.max(0, meta - recaudado);
+            const isDisabled = causa.estado !== 'Activa';
+            
+            const idEscapado = escapeHTML(causa.id_causa);
+            const beneficiario = causa.beneficiario.startsWith('GRUPO: ') ? causa.beneficiario.substring(7).trim() : causa.beneficiario;
+
+            const cardClass = isDisabled ? 'opacity-70 bg-slate-50 shadow-inner' : 'bg-white shadow-lg hover:shadow-xl';
+            const btnClass = isDisabled ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white border border-amber-600 text-amber-600 hover:bg-amber-50';
+            const btnText = causa.estado === 'Completada' ? 'Meta Alcanzada' : (causa.estado === 'Cancelada' ? 'Cancelada' : 'Aportar Ahora');
+
+
+            html += `
+                <div class="rounded-xl shadow-sm p-3 border border-amber-200 ${cardClass} compact-card">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="text-sm font-bold text-slate-800 truncate" title="${causa.titulo}">${causa.titulo}</h4>
+                        <span class="text-xs font-semibold px-1 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                           A ${beneficiario}
+                        </span>
+                    </div>
+                    
+                    <!-- PÁRRAFO DE DESCRIPCIÓN ELIMINADO POR REQUERIMIENTO DEL USUARIO -->
+                    
+                    <!-- Progreso -->
+                    <div class="space-y-1 mb-2 mt-4">
+                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                            <div class="bg-amber-600 h-1.5 rounded-full progress-bar-fill" style="width: ${porcentaje}%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-medium">
+                            <span class="color-dorado-main">${AppFormat.formatNumber(recaudado)} ℙ</span>
+                            <span class="text-slate-500">${AppFormat.formatNumber(meta)} ℙ</span>
+                        </div>
+                        <div class="text-right text-[10px] font-medium text-slate-500">
+                           ${porcentaje}% completado (${AppFormat.formatNumber(faltante)} ℙ faltantes)
+                        </div>
+                    </div>
+
+                    <!-- Botón de Aporte -->
+                    <div class="flex justify-end">
+                        <button 
+                            onclick="AppUI.showDonacionesStep2('${idEscapado}')" 
+                            ${isDisabled ? 'disabled' : ''}
+                            class="px-3 py-1 text-xs font-medium rounded-lg shadow-sm transition-colors ${btnClass}">
+                            ${btnText}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
     },
     
     updateAdminDepositoCalculo: function() {
@@ -2134,7 +2523,10 @@ const AppUI = {
     goToHeroSlide: function(index) {
         if (index < 0 || index >= AppState.heroSlideCount) {
              index = Math.max(0, Math.min(index, AppState.heroSlideCount - 1));
-             if (index === 0) return; 
+             // Si el índice es 6 (último), volver a 0
+             if (index === 6) index = 0; 
+             // Si es 0 y se pedía un índice mayor que 6, volver a 0
+             if (index === 0 && AppState.heroSlideIndex === 6) index = 0;
         }
         
         AppState.heroSlideIndex = index;
@@ -2281,7 +2673,6 @@ const AppUI = {
         homeStatsContainer.classList.remove('hidden');
         
         document.getElementById('home-modules-grid').classList.remove('hidden');
-        
     },
 
     mostrarDatosGrupo: function(grupo) {
@@ -2934,6 +3325,92 @@ const AppTransacciones = {
         }
     },
     
+    // --- NUEVO: Aporte a Causa (Donaciones) ---
+    confirmarAporte: async function() {
+        const statusMsg = document.getElementById('causa-step2-status-msg');
+        const submitBtn = document.getElementById('donaciones-submit-step2-btn');
+        const btnText = document.getElementById('donaciones-btn-text-step2');
+        
+        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Aportando...');
+
+        const idCausa = document.getElementById('causa-id-input-step2').value.trim();
+        const alumnoNombre = document.getElementById('causa-search-alumno-step2').value.trim();
+        const montoAporte = parseInt(document.getElementById('causa-monto-aporte').value, 10);
+        const claveP2P = document.getElementById('causa-clave-p2p-step2').value.trim();
+
+        const causa = AppState.causas.items[idCausa];
+        const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === alumnoNombre);
+        
+        let errorValidacion = "";
+        
+        document.getElementById('causa-search-alumno-step2').classList.remove('shake');
+        document.getElementById('causa-monto-aporte').classList.remove('shake');
+        document.getElementById('causa-clave-p2p-step2').classList.remove('shake');
+
+        if (!causa) {
+             errorValidacion = "Error interno: Causa no encontrada.";
+        } else if (causa.estado !== 'Activa') {
+             errorValidacion = `La causa "${causa.titulo}" ya está ${causa.estado.toLowerCase()} y no acepta más donaciones.`;
+        } else if (!student || student.nombre !== alumnoNombre) {
+            errorValidacion = "Alumno no encontrado. Por favor, seleccione su nombre.";
+            document.getElementById('causa-search-alumno-step2').classList.add('shake');
+        } else if (isNaN(montoAporte) || montoAporte < AppConfig.DONACION_MIN_APORTE) {
+            errorValidacion = `El monto debe ser al menos ${AppFormat.formatNumber(AppConfig.DONACION_MIN_APORTE)} ℙ.`;
+            document.getElementById('causa-monto-aporte').classList.add('shake');
+        } else if (!claveP2P) {
+            errorValidacion = "Debe ingresar su Clave P2P.";
+            document.getElementById('causa-clave-p2p-step2').classList.add('shake');
+        } else if (student.pinceles < montoAporte) {
+            errorValidacion = "Saldo insuficiente para realizar el aporte.";
+        } else if (montoAporte > (causa.meta_total - causa.monto_recaudado)) {
+            const faltante = causa.meta_total - causa.monto_recaudado;
+            // Permitir que el último aporte exceda ligeramente, pero no por mucho más del 10%
+            if (faltante > 0 && montoAporte > (faltante + (causa.meta_total * 0.10))) { 
+                errorValidacion = `El aporte excede demasiado el monto faltante (${AppFormat.formatNumber(faltante)} ℙ). Ajuste el monto.`;
+            }
+        }
+        
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Confirmar Aporte');
+            return;
+        }
+
+        AppTransacciones.setLoading(statusMsg, `Aportando ${AppFormat.formatNumber(montoAporte)} ℙ a ${causa.titulo}...`);
+        
+        try {
+            const payload = {
+                accion: 'aportar_a_causa',
+                alumnoNombre: alumnoNombre,
+                claveP2P: claveP2P,
+                idCausa: idCausa,
+                montoAporte: montoAporte
+            };
+
+            const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!result.success) {
+                throw new Error(result.message || "Error desconocido de la API al aportar.");
+            }
+            
+            AppUI.showSuccessSummary('donaciones-modal', {
+                ...result,
+                causa_id: causa.titulo,
+                monto_donado: montoAporte,
+            }, 'donacion');
+            
+            AppData.cargarDatos(false); 
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Confirmar Aporte');
+        }
+    },
+    
     iniciarCanje: function(bonoClave) {
         const bono = AppState.bonos.disponibles.find(b => b.clave === bonoClave);
         const statusMsg = document.getElementById('bono-status-msg');
@@ -3317,13 +3794,17 @@ const AppTransacciones = {
         
         const itemIdInput = document.getElementById('tienda-admin-itemid-input');
         const nombreInput = document.getElementById('tienda-admin-nombre-input');
+        // La descripción ha sido eliminada del formulario, pero la mantenemos en el objeto de datos si existe en el HTML (para compatibilidad)
+        const descInput = document.getElementById('tienda-admin-desc-input');
+        const descripcion = descInput ? descInput.value.trim() : ''; 
+
         const precioInput = document.getElementById('tienda-admin-precio-input');
         const stockInput = document.getElementById('tienda-admin-stock-input');
         
         const item = {
             ItemID: itemIdInput.value.trim(),
             Nombre: nombreInput.value.trim(),
-            Descripcion: document.getElementById('tienda-admin-desc-input').value.trim(),
+            Descripcion: descripcion, // Usar la descripción del input si existe
             Tipo: document.getElementById('tienda-admin-tipo-input').value.trim(),
             PrecioBase: parseInt(precioInput.value, 10),
             Stock: parseInt(stockInput.value, 10),
@@ -3465,7 +3946,129 @@ const AppTransacciones = {
         }
     },
     
-    // --- NUEVO: FUNCIONES PARA GUARDAR LA FECHA DE APERTURA ---
+    // --- NUEVO: FUNCIONES DE GESTIÓN DE CAUSAS (ADMIN) ---
+
+    crearActualizarCausa: async function() {
+        const statusMsg = document.getElementById('causa-admin-status-msg');
+        const submitBtn = document.getElementById('causa-admin-submit-btn');
+        
+        const idInput = document.getElementById('causa-admin-id-input');
+        const tituloInput = document.getElementById('causa-admin-titulo-input');
+        const metaInput = document.getElementById('causa-admin-meta-input');
+        const estadoInput = document.getElementById('causa-admin-estado-input');
+        
+        // Beneficiario se obtiene del estado del buscador
+        const beneficiario = AppState.currentSearch.causaAdminBeneficiario.selected;
+
+
+        const causa = {
+            id_causa: idInput.value.trim().toUpperCase(),
+            titulo: tituloInput.value.trim(),
+            meta_total: parseInt(metaInput.value, 10),
+            descripcion: '', // La descripción se elimina del flujo por requerimiento del usuario.
+            beneficiario: beneficiario, 
+            estado: estadoInput.value,
+        };
+        
+        let errorValidacion = "";
+        
+        idInput.classList.remove('shake');
+        tituloInput.classList.remove('shake');
+        metaInput.classList.remove('shake');
+
+        if (!causa.id_causa) {
+            errorValidacion = "El 'ID Causa' es obligatorio.";
+            idInput.classList.add('shake');
+        } else if (!causa.titulo) {
+            errorValidacion = "El 'Título' es obligatorio.";
+            tituloInput.classList.add('shake');
+        } else if (isNaN(causa.meta_total) || causa.meta_total <= AppConfig.DONACION_MIN_APORTE) {
+            errorValidacion = `La 'Meta' debe ser mayor a ${AppFormat.formatNumber(AppConfig.DONACION_MIN_APORTE)} ℙ.`;
+            metaInput.classList.add('shake');
+        } else if (!causa.beneficiario) {
+            errorValidacion = "Debe seleccionar un beneficiario de la lista.";
+            document.getElementById('causa-admin-beneficiario-search').classList.add('shake');
+        }
+        
+        setTimeout(() => {
+            idInput.classList.remove('shake');
+            tituloInput.classList.remove('shake');
+            metaInput.classList.remove('shake');
+            document.getElementById('causa-admin-beneficiario-search').classList.remove('shake');
+        }, 1000);
+
+
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            return;
+        }
+
+        AppTransacciones.setLoadingState(submitBtn, null, true, 'Guardando...');
+        AppTransacciones.setLoading(statusMsg, `Guardando causa ${causa.id_causa}...`);
+
+        try {
+            const payload = {
+                accion: 'admin_crear_causa',
+                clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
+                causa: causa
+            };
+
+            const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!result.success) {
+                throw new Error(result.message || "Error al guardar la causa.");
+            }
+            
+            AppTransacciones.setSuccess(statusMsg, result.message || "¡Causa guardada con éxito!");
+            AppUI.clearCausaAdminForm();
+            await AppData.cargarDatos(false);
+            AppUI.renderCausasList(); 
+            AppUI.populateCausasAdminList(); 
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, null, false, 'Crear / Actualizar Causa');
+        }
+    },
+
+    eliminarCausa: async function(idCausa) {
+        const statusMsg = document.getElementById('causa-admin-status-msg');
+        AppTransacciones.setLoading(statusMsg, `Eliminando causa ${idCausa}...`);
+        
+        document.querySelectorAll('.delete-causa-btn').forEach(btn => btn.disabled = true);
+
+        try {
+            const payload = {
+                accion: 'admin_eliminar_causa',
+                clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER', 
+                idCausa: idCausa
+            };
+
+            const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            if (!result.success) {
+                throw new Error(result.message || "Error al eliminar la causa.");
+            }
+            
+            AppTransacciones.setSuccess(statusMsg, result.message || "¡Causa eliminada con éxito!");
+            await AppData.cargarDatos(false);
+            AppUI.renderCausasList(); 
+            AppUI.populateCausasAdminList();
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+            document.querySelectorAll('.delete-causa-btn').forEach(btn => btn.disabled = false);
+        } 
+    },
+    
+    // --- FUNCIONES DE GESTIÓN DE FECHA DE APERTURA ---
     guardarFechaApertura: async function() {
         const dateInput = document.getElementById('tienda-admin-date-input');
         const statusMsg = document.getElementById('tienda-date-status-msg');
@@ -3644,12 +4247,20 @@ const AppContent = {
             <li><strong>Rendimiento:</strong> La ganancia se determina por una Tasa Base (${AppConfig.DEPOSITO_TASA_BASE * 100}% base) más un factor de rendimiento diario (${AppConfig.DEPOSITO_BONUS_POR_DIA * 100}% por día).</li>
             <li><strong>Retención de Capital:</strong> El capital invertido y los rendimientos generados permanecerán inmovilizados hasta la fecha de vencimiento.</li>
         </ul>
+        
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Normativa de Donaciones (Custodia)</strong>
+        <p>El BPD actúa como custodio de los fondos donados a causas específicas hasta que se cumpla la meta o la campaña sea cerrada administrativamente. Los fondos no están líquidos para el beneficiario hasta que la campaña finalice exitosamente.</p>
+        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+            <li><strong>Custodia:</strong> Los Pinceles donados se transfieren inmediatamente a la Tesorería del BPD para su custodia.</li>
+            <li><strong>Liberación:</strong> El monto total recaudado solo será liberado al beneficiario cuando el monto recaudado sea igual o superior a la meta total.</li>
+            <li><strong>Finalización:</strong> Una vez completada, la causa pasa a estado 'Completada' y no se aceptarán más aportes.</li>
+        </ul>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Sanciones por Incumplimiento</strong>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VI. Sanciones por Incumplimiento</strong>
         <p>Se prohíbe estrictamente el uso de cualquier componente del BPD (incluyendo Transferencias y otros servicios) para realizar actividades que violen las Normas de Convivencia o el Reglamento Académico.</p>
         <p>La violación de esta normativa resultará en medidas disciplinarias determinadas por el BPD, que pueden incluir la congelación temporal o permanente de la cuenta, y la reversión de transacciones.</p>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VI. Integridad Tecnológica y Seguridad del Sistema</strong>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VII. Integridad Tecnológica y Seguridad del Sistema</strong>
         <p>El Banco del Pincel Dorado es una infraestructura académica crítica. Se advierte explícitamente a todos los usuarios que:</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm mt-2">
             <li>Cualquier intento deliberado de manipulación del código fuente (Frontend/Backend).</li>
@@ -3692,7 +4303,8 @@ const AppContent = {
 
 function escapeHTML(str) {
     if (typeof str !== 'string') return str;
-    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    // Esto es para que las comillas simples funcionen en onclick="funcion('dato')"
+    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
 }
 
 // Exportar funciones a la ventana global para que los eventos onclick en el HTML las encuentren
@@ -3713,6 +4325,10 @@ window.AppTransacciones.iniciarCanje = AppTransacciones.iniciarCanje;
 window.AppUI.showLegalModal = AppUI.showLegalModal; 
 window.AppTransacciones.guardarFechaApertura = AppTransacciones.guardarFechaApertura;
 window.AppTransacciones.borrarFechaApertura = AppTransacciones.borrarFechaApertura;
+// NUEVO: Funciones de Causas
+window.AppUI.showDonacionesStep2 = AppUI.showDonacionesStep2;
+window.AppUI.handleEditCausa = AppUI.handleEditCausa;
+window.AppTransacciones.eliminarCausa = AppTransacciones.eliminarCausa;
 
 window.onload = function() {
     AppUI.init();
