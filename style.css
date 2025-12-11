@@ -507,3 +507,114 @@ body {
     text-decoration: underline;
     transform: scale(1.05);
 }
+
+/* =================================================================== */
+/* NUEVOS ESTILOS: EFECTO DE NIEVE NAVIDEÑA (CSS PURE) */
+/* Utiliza box-shadow masivo y animaciones para simular la nieve en 3 capas */
+/* Solo se aplica en la pantalla de inicio (el body) */
+/* =================================================================== */
+
+/* Variables para la repetición de sombras (simulación de miles de copos) */
+:root {
+    /* Patrón de Coordenadas aleatorias (Capa 1: Pequeña y rápida) */
+    --shadows-1: 15vw 120vh #fff, 7vw 100vh #fff, 19vw 110vh #fff, 3vw 150vh #fff, 11vw 180vh #fff, 23vw 130vh #fff, 31vw 170vh #fff, 45vw 140vh #fff, 51vw 190vh #fff, 63vw 115vh #fff, 77vw 145vh #fff, 85vw 160vh #fff, 93vw 125vh #fff;
+    /* Repetir el patrón muchas veces para alta densidad (usando calc() para calcular las coordenadas) */
+    --shadows-1-full: var(--shadows-1), 
+                      calc(var(--shadows-1) + 100vw 100vh), 
+                      calc(var(--shadows-1) + 200vw 200vh), 
+                      calc(var(--shadows-1) + 300vw 300vh), 
+                      calc(var(--shadows-1) + 400vw 400vh), 
+                      calc(var(--shadows-1) + 500vw 500vh), 
+                      calc(var(--shadows-1) + 600vw 600vh), 
+                      calc(var(--shadows-1) + 700vw 700vh), 
+                      calc(var(--shadows-1) + 800vw 800vh), 
+                      calc(var(--shadows-1) + 900vw 900vh), 
+                      calc(var(--shadows-1) + 1000vw 1000vh);
+
+    /* Patrón de Coordenadas aleatorias (Capa 2: Mediana y media) */
+    --shadows-2: 5vw 100vh #fff, 25vw 130vh #fff, 40vw 160vh #fff, 60vw 110vh #fff, 80vw 150vh #fff, 10vw 180vh #fff;
+    --shadows-2-full: var(--shadows-2), 
+                      calc(var(--shadows-2) + 100vw 100vh), 
+                      calc(var(--shadows-2) + 200vw 200vh), 
+                      calc(var(--shadows-2) + 300vw 300vh), 
+                      calc(var(--shadows-2) + 400vw 400vh);
+
+    /* Patrón de Coordenadas aleatorias (Capa 3: Grande y lenta) */
+    --shadows-3: 12vw 110vh #fff, 35vw 190vh #fff, 55vw 140vh #fff, 90vw 170vh #fff;
+    --shadows-3-full: var(--shadows-3), 
+                      calc(var(--shadows-3) + 100vw 100vh), 
+                      calc(var(--shadows-3) + 200vw 200vh);
+}
+
+/* Definición de la animación de caída */
+@keyframes snow-fall {
+    0% {
+        transform: translateY(-100vh); /* Empieza fuera del viewport */
+    }
+    100% {
+        transform: translateY(100vh); /* Termina fuera del viewport (bucle) */
+    }
+}
+
+/* Animaciones de vaivén horizontal */
+@keyframes snow-sway-1 {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+}
+@keyframes snow-sway-2 {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-10px); }
+    100% { transform: translateX(0); }
+}
+@keyframes snow-sway-3 {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(15px); }
+    100% { transform: translateX(0); }
+}
+
+/* Capa 1: Rápida y densa (Cubre el frente) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px; /* Tamaño del copo */
+    height: 1px;
+    pointer-events: none; 
+    z-index: 9999; /* Asegura que esté sobre el contenido */
+    
+    /* Combinar patrones de sombra para alta densidad */
+    box-shadow: var(--shadows-1-full), var(--shadows-2-full); 
+    
+    border-radius: 50%;
+    opacity: 0.8;
+    
+    /* Animación más rápida y con vaivén sutil */
+    animation: 
+        snow-fall 10s linear infinite,
+        snow-sway-1 3s ease-in-out infinite alternate;
+}
+
+/* Capa 2: Lenta y grande (Cubre el fondo) */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 2px; /* Tamaño del copo */
+    height: 2px;
+    pointer-events: none;
+    z-index: 9998; /* Un poco detrás */
+    
+    /* Usar el patrón 3 */
+    box-shadow: var(--shadows-3-full);
+    
+    border-radius: 50%;
+    opacity: 0.7;
+    
+    /* Animación más lenta y con vaivén más notorio */
+    animation: 
+        snow-fall 20s linear infinite,
+        snow-sway-3 7s ease-in-out infinite alternate;
+}
