@@ -379,7 +379,7 @@ body {
     font-weight: 500;
 }
 
-/* Base para Tarjetas de Bonos y Tienda (Compactación) */
+/* Base para Tarjetas de Bonos, Tienda y Aportes (Compacidad) */
 .compact-card {
     /* Reducimos el padding interno para compactar verticalmente y horizontalmente */
     padding: 0.75rem; /* p-3 */
@@ -403,6 +403,12 @@ body {
     padding: 0.25rem 0.75rem; /* px-3 py-1 */
     font-size: 0.75rem; /* text-xs */
 }
+
+/* === BARRA DE PROGRESO DE DONACIONES === */
+.progress-bar-fill {
+    transition: width 0.5s ease-out; /* Transición suave al cambiar el porcentaje */
+}
+
 
 /* === TARJETA DE ALUMNO (NUEVO DISEÑO COMPACTO) === */
 .personal-student-card {
