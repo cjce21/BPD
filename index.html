@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BPD v33.0 (Programación de Apertura Manual + UI Estable) -->
+<!-- BPD v33.3 (Donaciones Compactas + Hero Causas) -->
 <html lang="es" class="h-full bg-slate-50 overflow-hidden">
 <head>
     <meta charset="UTF-8">
@@ -117,6 +117,11 @@
         .group-list-container {
             /* Reduce padding y ajusta la fuente para compactación horizontal */
             @apply p-2;
+        }
+        
+        /* Estilo para la barra de progreso de donaciones */
+        .progress-bar-fill {
+            transition: width 0.5s ease-out;
         }
     </style>
     
@@ -293,9 +298,12 @@
                                 <!-- JS inyectará "Tienda Abierta" o "Tienda Cerrada" -->
                             </div>
                             <!-- Botones (Estilo Outline Dorado) -->
-                            <div class="grid grid-cols-3 gap-3 flex-shrink-0 w-full">
+                            <div class="grid grid-cols-4 gap-3 flex-shrink-0 w-full">
                                 <button id="transacciones-btn" class="col-span-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                                     Transacciones
+                                </button>
+                                <button id="donaciones-btn" class="col-span-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
+                                    Donaciones
                                 </button>
                                 <button id="bonos-btn" class="col-span-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                                     Bonos
@@ -449,13 +457,41 @@
                                             &#8249; Depósitos
                                         </button>
                                         <button onclick="AppUI.goToHeroSlide(5)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-amber-600 text-amber-600 hover:bg-amber-50 transition-colors">
+                                            Donaciones &#8250;
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SLIDE 5 (NUEVO): DONACIONES Y CAUSAS (FONDO BLANCO) -->
+                            <div class="hero-slide bg-white p-6 md:p-8 flex flex-col">
+                                <div class="hero-slide-content w-full">
+                                    <div>
+                                        <h2 class="text-2xl font-bold color-dorado-main mb-4">Causas y Donaciones (Filantropía)</h2>
+                                        <div id="slide-donaciones-content" class="space-y-4 text-slate-800">
+                                            <p><strong>Propósito:</strong> Canalizar los Pinceles de los alumnos hacia metas académicas específicas (proyectos, recursos, infraestructura).</p>
+                                            <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+                                                <li><span class="font-bold">Monto Mínimo:</span> Aportes desde 100 ℙ.</li>
+                                                <li><span class="font-bold">Custodia:</span> Los fondos son administrados por el BPD hasta que la meta se cumple o la causa finaliza.</li>
+                                                <li><span class="font-bold">Impacto:</span> Cada aporte ayuda a alcanzar un objetivo visible y medible.</li>
+                                                <li><span class="font-bold">Transparencia:</span> Puedes seguir el progreso de recaudación en tiempo real.</li>
+                                            </ul>
+                                            <p class="text-xs text-slate-800 italic mt-3">Consejo: Las causas con mayor apoyo se completan más rápido, dejando un legado visible en el aula.</p>
+                                        </div>
+                                    </div>
+                                    <!-- Botones de navegación -->
+                                    <div class="flex justify-between mt-6 flex-shrink-0">
+                                        <button onclick="AppUI.goToHeroSlide(4)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors">
+                                            &#8249; Impuestos
+                                        </button>
+                                        <button onclick="AppUI.goToHeroSlide(6)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-amber-600 text-amber-600 hover:bg-amber-50 transition-colors">
                                             Bonos/Tienda &#8250;
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- SLIDE 5: BONOS Y TIENDA (FONDO BLANCO) -->
+                            <!-- SLIDE 6: BONOS Y TIENDA (FONDO BLANCO) -->
                             <div class="hero-slide bg-white p-6 md:p-8 flex flex-col">
                                 <div class="hero-slide-content w-full">
                                     <div>
@@ -471,8 +507,8 @@
                                     </div>
                                     <!-- Botones de navegación -->
                                     <div class="flex justify-between mt-6 flex-shrink-0">
-                                        <button onclick="AppUI.goToHeroSlide(4)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors">
-                                            &#8249; Impuestos
+                                        <button onclick="AppUI.goToHeroSlide(5)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors">
+                                            &#8249; Donaciones
                                         </button>
                                         <button onclick="AppUI.goToHeroSlide(0)" class="hero-nav-btn flex-shrink-0 text-sm font-medium rounded-lg bg-white border border-amber-600 text-amber-600 hover:bg-amber-50 transition-colors">
                                             Inicio &#8250;
@@ -822,6 +858,9 @@
                     <button data-tab="tienda_inventario" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-700 transition-colors hover:bg-slate-100">
                         Tienda (Inventario)
                     </button>
+                    <button data-tab="causas_admin" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-700 transition-colors hover:bg-slate-100">
+                        Causas
+                    </button>
                 </div>
             </div>
 
@@ -1040,13 +1079,83 @@
                                             <th class="px-4 py-2 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Acción</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="bonos-admin-lista" class="bg-white divide-y divide-slate-200">
+                                    <tbody id="tienda-admin-lista" class="bg-white divide-y divide-slate-200">
                                         <tr><td colspan="5" class="p-4 text-center text-slate-500">Cargando...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
+
+                    <!-- NUEVA PESTAÑA 7: GESTIÓN DE CAUSAS (CON BUSCADOR MEJORADO) -->
+                    <div id="tab-causas_admin" class="tab-content hidden no-scrollbar">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                            <div id="causas-admin-form-container" class="lg:col-span-2 overflow-y-auto max-h-[480px] pr-2 no-scrollbar">
+                                <h3 class="text-lg font-semibold color-dorado-main mb-4">Crear / Actualizar Causa</h3>
+                                <form id="causa-admin-form" class="space-y-4">
+                                    <div>
+                                        <label for="causa-admin-id-input" class="block text-sm font-medium text-slate-700 mb-1">ID Causa (Único)</label>
+                                        <input type="text" id="causa-admin-id-input" placeholder="Ej: AULA_001" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 uppercase disabled:bg-slate-100">
+                                        <p class="text-xs text-slate-500 mt-1">Si el ID ya existe, se actualizará la causa.</p>
+                                    </div>
+                                    <div>
+                                        <label for="causa-admin-titulo-input" class="block text-sm font-medium text-slate-700 mb-1">Título de la Causa</label>
+                                        <input type="text" id="causa-admin-titulo-input" placeholder="Ej: Reparación de Computadoras" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                    </div>
+                                    <!-- SE ELIMINA CAMPO DE DESCRIPCIÓN POR REQUERIMIENTO DEL USUARIO -->
+                                    <div>
+                                        <label for="causa-admin-meta-input" class="block text-sm font-medium text-slate-700 mb-1">Meta a Recaudar (Pinceles)</label>
+                                        <input type="number" id="causa-admin-meta-input" placeholder="Ej: 500000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                    </div>
+                                    
+                                    <!-- BUSCADOR DE BENEFICIARIO (REEMPLAZA AL SELECT SIMPLE) -->
+                                    <div class="relative">
+                                        <label for="causa-admin-beneficiario-search" class="block text-sm font-medium text-slate-700 mb-1">Beneficiario/Cuenta de Destino</label>
+                                        <input type="text" id="causa-admin-beneficiario-search" placeholder="Busca Alumno o Grupo..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                        <!-- Contenedor de resultados oculto inicialmente -->
+                                        <div id="causa-admin-beneficiario-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto"></div>
+                                        <p class="text-xs text-slate-500 mt-1">Busque y seleccione el destino final de los fondos.</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="causa-admin-estado-input" class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+                                        <select id="causa-admin-estado-input" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                            <option value="Activa">Activa</option>
+                                            <option value="Completada">Completada</option>
+                                            <option value="Cancelada">Cancelada</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="flex items-center justify-end gap-3 pt-2">
+                                        <button type="button" id="causa-admin-clear-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Limpiar</button>
+                                        <button type="submit" id="causa-admin-submit-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Crear / Actualizar Causa</button>
+                                    </div>
+                                    <div id="causa-admin-status-msg" class="text-sm text-center font-medium pt-2 status-msg-fixed-height"></div>
+                                </form>
+                            </div>
+                            <div id="causas-admin-lista-container" class="lg:col-span-3 overflow-y-auto max-h-[480px] pr-2 no-scrollbar">
+                                <h3 class="text-lg font-semibold color-dorado-main mb-4">Causas Activas</h3>
+                                <div class="border border-slate-200 rounded-lg overflow-hidden">
+                                    <table class="min-w-full divide-y divide-slate-200">
+                                        <thead class="bg-slate-50 sticky top-0">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">ID</th>
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">Título</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Meta</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Recaudado</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Estado</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="causas-admin-lista" class="bg-white divide-y divide-slate-200">
+                                            <tr><td colspan="6" class="p-4 text-center text-slate-500">Cargando causas...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 
                 <!-- Contenedor para el Reporte de Confirmación (Para transacciones de admin) -->
@@ -1218,6 +1327,89 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL DE CAUSAS (Donaciones) - COMPACTO -->
+    <div id="donaciones-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600">
+            <div class="bg-slate-50 border-b border-slate-200">
+                <div class="flex justify-between items-center p-4">
+                    <h2 class="text-lg font-semibold color-dorado-main">Causas y Metas (Donaciones)</h2>
+                    <button id="donaciones-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
+                </div>
+            </div>
+            
+            <div class="modal-content-fixed-height">
+
+                <!-- Contenedor que alterna entre Listado/Formulario y Reporte de Confirmación -->
+                <div id="donaciones-main-step-container" class="h-full overflow-y-auto space-y-4 no-scrollbar">
+
+                    <!-- PESTAÑA 1: LISTADO DE CAUSAS (Padding reducido a p-4 para compacidad) -->
+                    <div id="donaciones-step-list-container" class="p-4">
+                        <h3 class="text-base font-semibold text-slate-800 mb-2">Causas Activas y Metas</h3>
+                        
+                        <div id="donaciones-status-msg" class="text-sm text-left font-medium color-dorado-main status-msg-fixed-height flex-1 items-center flex px-2 mb-2"></div>
+                        
+                        <!-- Grid ajustado para mejor visualización compacta -->
+                        <div id="causas-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pr-2 overflow-y-auto max-h-[440px]">
+                            <p class="text-sm text-slate-500 text-center col-span-4">Cargando causas disponibles...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- PESTAÑA 2: FORMULARIO DE APORTE -->
+                    <div id="donaciones-step-form-container" class="p-4 hidden h-full flex items-center justify-center">
+                         <div class="max-w-lg mx-auto space-y-3 w-full">
+                            <h3 class="text-lg font-bold color-dorado-main mb-2" id="causa-form-title">Aportar a: [Nombre de la Causa]</h3>
+                            
+                            <div id="causa-summary" class="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                                <p class="text-xs font-semibold text-slate-800">Meta: <span id="causa-meta-display">0 ℙ</span></p>
+                                <p class="text-xs font-semibold text-slate-800">Recaudado: <span id="causa-recaudado-display">0 ℙ</span></p>
+                                <p class="text-xs font-semibold text-slate-800">Faltante: <span id="causa-faltante-display" class="text-red-600">0 ℙ</span></p>
+                            </div>
+
+                            <input type="hidden" id="causa-id-input-step2">
+
+                            <div class="relative">
+                                <label for="causa-search-alumno-step2" class="block text-xs font-medium text-slate-700 mb-1">Tu Nombre (Donante)</label>
+                                <input type="text" id="causa-search-alumno-step2" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 text-sm">
+                                <div id="causa-origen-results-step2" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
+                            </div>
+
+                            <div>
+                                <label for="causa-monto-aporte" class="block text-xs font-medium text-slate-700 mb-1">Monto a Donar (ℙ)</label>
+                                <input type="number" id="causa-monto-aporte" placeholder="Mínimo 100 ℙ" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 text-sm">
+                            </div>
+
+                            <div>
+                                <label for="causa-clave-p2p-step2" class="block text-xs font-medium text-slate-700 mb-1">Tu Clave P2P</label>
+                                <input type="password" id="causa-clave-p2p-step2" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 text-sm">
+                            </div>
+
+                            <!-- AJUSTE: Altura fija h-10 para el mensaje de estado de Donación Step 2 -->
+                            <div id="causa-step2-status-msg" class="text-xs text-center font-medium px-6 pt-2 status-msg-fixed-height"></div>
+
+                            <div class="flex justify-between gap-3 pt-2">
+                                <button id="donaciones-step-back-btn" type="button" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Volver a Causas</button>
+                                <button id="donaciones-submit-step2-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
+                                    <span id="donaciones-btn-text-step2">Confirmar Aporte</span>
+                                </button>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+                
+                <!-- Contenedor para el Reporte de Confirmación (Se muestra al completar un aporte) -->
+                <div id="donaciones-report-container" class="hidden h-full flex items-center justify-center">
+                    <!-- Contenido inyectado por JS (el informe estético) -->
+                </div>
+
+            </div>
+
+            <div id="donaciones-modal-footer" class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
+                <!-- Pie de página vacío -->
+            </div>
+        </div>
+    </div>
+
 
     <!-- MODAL DE ALUMNO (PERSONALIZADO Y COMPACTO) -->
     <div id="student-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1002] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
