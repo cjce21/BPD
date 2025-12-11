@@ -546,13 +546,13 @@ body {
                       calc(var(--shadows-3) + 200vw 200vh);
 }
 
-/* Definición de la animación de caída */
+/* Definición de la animación de caída (AJUSTADA: 0vh a 100vh) */
 @keyframes snow-fall {
     0% {
-        transform: translateY(-100vh); /* Empieza fuera del viewport */
+        transform: translateY(0vh); 
     }
     100% {
-        transform: translateY(100vh); /* Termina fuera del viewport (bucle) */
+        transform: translateY(100vh); 
     }
 }
 
@@ -579,8 +579,8 @@ body::before {
     position: fixed;
     top: 0;
     left: 0;
-    width: 1px; /* Tamaño del copo */
-    height: 1px;
+    width: 2px; /* AJUSTADO: Más visible */
+    height: 2px;
     pointer-events: none; 
     z-index: 9999; /* Asegura que esté sobre el contenido */
     
@@ -588,7 +588,7 @@ body::before {
     box-shadow: var(--shadows-1-full), var(--shadows-2-full); 
     
     border-radius: 50%;
-    opacity: 0.8;
+    opacity: 0.9; /* AJUSTADO: Un poco más opaco */
     
     /* Animación más rápida y con vaivén sutil */
     animation: 
@@ -602,8 +602,8 @@ body::after {
     position: fixed;
     top: 0;
     left: 0;
-    width: 2px; /* Tamaño del copo */
-    height: 2px;
+    width: 3px; /* AJUSTADO: Más visible */
+    height: 3px;
     pointer-events: none;
     z-index: 9998; /* Un poco detrás */
     
@@ -611,7 +611,7 @@ body::after {
     box-shadow: var(--shadows-3-full);
     
     border-radius: 50%;
-    opacity: 0.7;
+    opacity: 0.8; /* AJUSTADO: Un poco más opaco */
     
     /* Animación más lenta y con vaivén más notorio */
     animation: 
