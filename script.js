@@ -1,8 +1,7 @@
 // --- CONFIGURACIÓN ---
 const AppConfig = {
-    // Asegúrate de que esta URL sea la correcta del despliegue de tu Apps Script
     API_URL: 'https://script.google.com/macros/s/AKfycbxAzUVHsXNAVfgN52wYffigQL3lZmKZZ81723-FWBwWU-oc4KDZe1F8RXIZBUk_v2c_2Q/exec',
-    TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbxAzUVHsXNAVfgN52wYffigQL3lZmKZZ81723-FWBwWU-oc4KDZe1F8RXIZBUk_v2c_2Q/exec', // Usar URL correcta para Admin
+    TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbxAzUVHsXNAVfgN52wYffigQL3lZmKZZ81723-FWBwWU-oc4KDZe1F8RXIZBUk_v2c_2Q/exec', 
     SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1Ji7Dbx5NLEjC4Sl5xQ20zdecnwjjEm0Lb9l2xIqp7XM/edit?usp=sharing',
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
@@ -10,15 +9,17 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v33.5', // Versión actualizada
+    APP_VERSION: 'v34.7', // Actualizado a la normativa Dominicana
     
-    IMPUESTO_P2P_TASA: 0.01,        
-    IMPUESTO_DEPOSITO_TASA: 0.0,    
+    // FISCALIDAD RD v34.7
+    IMPUESTO_P2P_TASA: 0.0015,       // 0.15% Ley 288-04
+    IMPUESTO_DEPOSITO_ISR: 0.10,     // 10% Retención sobre ganancia
     IMPUESTO_DEPOSITO_ADMIN: 0.05,
     TASA_ITBIS: 0.18,               
     
-    PRESTAMO_TASA_BASE: 0.015,       
-    PRESTAMO_BONUS_POR_DIA: 0.0003,  
+    // PRÉSTAMOS RD (5% gastos cierre + 0.1% diario)
+    PRESTAMO_TASA_BASE: 0.05,       
+    PRESTAMO_BONUS_POR_DIA: 0.001,  
     PRESTAMO_MIN_MONTO: 10000,
     PRESTAMO_MAX_MONTO: 150000,
     PRESTAMO_MIN_PLAZO_DIAS: 3,
@@ -30,10 +31,8 @@ const AppConfig = {
     DEPOSITO_MIN_PLAZO_DIAS: 7,
     DEPOSITO_MAX_PLAZO_DIAS: 30,
     
-    // NUEVO: Donaciones
     DONACION_MIN_APORTE: 100,
 };
-
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
     datosActuales: null,
