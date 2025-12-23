@@ -12,8 +12,7 @@ const AppConfig = {
     APP_STATUS: 'RC', 
     APP_VERSION: 'v33.5', // Versión actualizada
     
-    IMPUESTO_P2P_TASA: 0.0015,        
-    IMPUESTO_DEPOSITO_TASA: 0.10,    
+    IMPUESTO_P2P_TASA: 0.0015,           
     IMPUESTO_DEPOSITO_ADMIN: 0.05,
     TASA_ITBIS: 0.18,               
     
