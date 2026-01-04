@@ -4215,88 +4215,90 @@ const AppTransacciones = {
 // --- CONTENIDO ESTATICOS (Términos, Privacidad) ---
 const AppContent = {
     terminosYCondiciones: `
-        <strong class="text-lg font-semibold text-slate-800 mb-2 block">I. Alcance y Principios</strong>
-        <p>Los presentes Términos y Condiciones rigen el uso de todos los servicios de banca virtual proporcionados por el Banco del Pincel Dorado (BPD). La utilización de cualquiera de estos servicios implica la aceptación total de estas disposiciones y del Reglamento General.</p>
+        <strong class="text-lg font-semibold text-slate-800 mb-2 block">I. Alcance, Principios y Auditoría Docente</strong>
+        <p>Los presentes Términos y Condiciones rigen el uso de todos los servicios de banca virtual proporcionados por el Banco del Pincel Dorado (BPD). La utilización de la plataforma implica la aceptación total de estas disposiciones.</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Usuario:</strong> Cualquier alumno activo dentro del ecosistema.</li>
+            <li><strong>Transparencia de Roles:</strong> Se establece explícitamente que el personal docente actúa como Auditor General, poseyendo visibilidad total sobre los movimientos, saldos y registros de todos los usuarios para garantizar la transparencia académica.</li>
             <li><strong>Pinceles (ℙ):</strong> Unidad monetaria virtual de uso exclusivo en el ámbito académico.</li>
-            <li><strong>Clave P2P:</strong> Código personal e intransferible necesario para autorizar transacciones.</li>
-            <li><strong>Tesorería:</strong> Fondo operativo central del BPD destinado a asegurar la liquidez y sostenibilidad del sistema.</li>
+            <li><strong>Cierre Operativo:</strong> El procesamiento de intereses, comisiones y cargos moratorios se realiza diariamente de forma automatizada en el rango horario de <strong>00:00h a 01:00h</strong>.</li>
         </ul>
 
         <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">II. Normativa de Transferencias (P2P)</strong>
-        <p>Este servicio facilita el intercambio de valor entre cuentas de Usuarios.</p>
+        <p>Este servicio facilita el intercambio de valor entre cuentas de Usuarios de forma rápida.</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Irrevocabilidad:</strong> Toda Transferencia confirmada es definitiva e irreversible.</li>
-            <li><strong>Costo Operacional:</strong> Se aplicará una comisión del <strong>${AppConfig.IMPUESTO_P2P_TASA * 100}%</strong> sobre el monto enviado, la cual será debitada de la cuenta del Usuario Remitente.</li>
-            <li><strong>Seguridad:</strong> El Usuario es responsable de la protección de su Clave P2P.</li>
+            <li><strong>Irrevocabilidad:</strong> Toda transferencia confirmada es definitiva e irreversible.</li>
+            <li><strong>Costo Operacional:</strong> Se aplicará una comisión del <strong>0.15%</strong> sobre el monto enviado, debitada del remitente.</li>
+            <li><strong>Seguridad:</strong> El Usuario es responsable de la protección de su Clave P2P personal de 5 dígitos.</li>
         </ul>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">III. Normativa de Préstamos Flexibles</strong>
-        <p>Líneas de financiamiento sujetas a condiciones de cumplimiento y liquidez.</p>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">III. Gestión y Recuperación de Clave P2P</strong>
+        <p>La Clave P2P es el único medio de validación de identidad para transacciones salientes.</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Cálculo de Intereses:</strong> Interés determinado por una Tasa Base (${AppConfig.PRESTAMO_TASA_BASE * 100}% base) más un factor diario (${AppConfig.PRESTAMO_BONUS_POR_DIA * 100}% por día) según el plazo (3 a 21 días).</li>
-            <li><strong>Compromiso de Reembolso:</strong> El Usuario prestatario está obligado a devolver el capital más intereses en cuotas diarias. El incumplimiento resulta en la aplicación de cargos moratorios.</li>
-            <li><strong>Elegibilidad:</strong> La aprobación se basa en la evaluación de saldo y capacidad de pago.</li>
+            <li><strong>Costo por Olvido o Actualización:</strong> En caso de pérdida o solicitud de actualización manual por seguridad, la gestión administrativa tendrá un costo de <strong>10,000 ℙ</strong>, debitados de forma inmediata al generar el nuevo código.</li>
         </ul>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IV. Condiciones para Depósitos Flexibles (Inversiones)</strong>
-        <p>Servicio para incentivar el ahorro y la planificación financiera a medio plazo.</p>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IV. Normativa de Préstamos Flexibles</strong>
+        <p>Líneas de financiamiento para ofrecer liquidez a corto plazo sujetas a evaluación de elegibilidad.</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Rendimiento:</strong> La ganancia se determina por una Tasa Base (${AppConfig.DEPOSITO_TASA_BASE * 100}% base) más un factor de rendimiento diario (${AppConfig.DEPOSITO_BONUS_POR_DIA * 100}% por día).</li>
-            <li><strong>Retención de Capital:</strong> El capital invertido y los rendimientos generados permanecerán inmovilizados hasta la fecha de vencimiento.</li>
-        </ul>
-        
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Normativa de Donaciones (Custodia)</strong>
-        <p>El BPD actúa como custodio de los fondos donados a causas específicas hasta que se cumpla la meta o la campaña sea cerrada administrativamente. Los fondos no están líquidos para el beneficiario hasta que la campaña finalice exitosamente.</p>
-        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Custodia:</strong> Los Pinceles donados se transfieren inmediatamente a la Tesorería del BPD para su custodia.</li>
-            <li><strong>Liberación:</strong> El monto total recaudado solo será liberado al beneficiario cuando el monto recaudado sea igual o superior a la meta total.</li>
-            <li><strong>Finalización:</strong> Una vez completada, la causa pasa a estado 'Completada' y no se aceptarán más aportes.</li>
+            <li><strong>Montos:</strong> Desde 5,000 ℙ hasta 150,000 ℙ.</li>
+            <li><strong>Plazos:</strong> De 3 a 21 días.</li>
+            <li><strong>Cálculo de Intereses:</strong> Tasa Base del <strong>5%</strong> más un incremento diario del <strong>0.1%</strong> según el plazo elegido.</li>
+            <li><strong>Compromiso de Reembolso:</strong> El incumplimiento en cuotas diarias genera cargos moratorios automáticos sobre el saldo pendiente.</li>
         </ul>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VI. Sanciones por Incumplimiento</strong>
-        <p>Se prohíbe estrictamente el uso de cualquier componente del BPD (incluyendo Transferencias y otros servicios) para realizar actividades que violen las Normas de Convivencia o el Reglamento Académico.</p>
-        <p>La violación de esta normativa resultará en medidas disciplinarias determinadas por el BPD, que pueden incluir la congelación temporal o permanente de la cuenta, y la reversión de transacciones.</p>
-
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VII. Integridad Tecnológica y Seguridad del Sistema</strong>
-        <p>El Banco del Pincel Dorado es una infraestructura académica crítica. Se advierte explícitamente a todos los usuarios que:</p>
-        <ul class="list-disc list-inside ml-4 space-y-1 text-sm mt-2">
-            <li>Cualquier intento deliberado de manipulación del código fuente (Frontend/Backend).</li>
-            <li>La inyección de scripts, alteración de variables de sesión o explotación de vulnerabilidades.</li>
-            <li>El uso de herramientas de desarrollador para alterar flujos de transacción o eludir controles de seguridad.</li>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Condiciones para Depósitos Flexibles (Inversiones)</strong>
+        <p>Servicio diseñado para incentivar el ahorro y la planificación financiera a medio plazo.</p>
+        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+            <li><strong>Monto Mínimo:</strong> 50,000 ℙ.</li>
+            <li><strong>Plazos:</strong> De 7 a 30 días.</li>
+            <li><strong>Rendimiento:</strong> Tasa base del <strong>0.5%</strong> más un beneficio diario del <strong>0.0075%</strong>. El capital permanece inmovilizado hasta el vencimiento.</li>
         </ul>
-        <p class="mt-3 font-bold text-slate-900 bg-amber-50 p-3 border-l-4 border-amber-600 rounded">
-            SERÁ CONSIDERADO UN CIBERATAQUE ACADÉMICO GRAVE.
-            <br><span class="text-slate-600 font-normal mt-1 block">Dichas acciones resultarán en la <strong class="text-slate-900">EXPULSIÓN INMEDIATA E IRREVOCABLE</strong> del sistema bancario, la confiscación total de activos y el reporte disciplinario directo a la Dirección Académica.</span>
-        </p>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VI. Sistema Tributario (ISP e ITBIS)</strong>
+        <p>Cargas impositivas destinadas a regular la economía interna y mantener la salud de la Tesorería.</p>
+        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+            <li><strong>ISP (Impuesto Progresivo a la Riqueza):</strong> Aplicado diariamente a excedentes de saldos superiores a 100,000 ℙ:
+                <br>&nbsp;&nbsp;• De 100,001 a 250,000 ℙ: <strong>0.10%</strong> diario.
+                <br>&nbsp;&nbsp;• De 250,001 a 500,000 ℙ: <strong>0.20%</strong> diario.
+                <br>&nbsp;&nbsp;• Más de 500,001 ℙ: <strong>0.30%</strong> diario.
+            </li>
+            <li><strong>ITBIS (Tienda):</strong> Impuesto del <strong>18%</strong> aplicado a todas las compras de artículos y privilegios.</li>
+        </ul>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VII. Normativa de Donaciones (Custodia)</strong>
+        <p>El BPD actúa como custodio de los fondos donados hacia metas académicas específicas.</p>
+        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+            <li><strong>Monto Mínimo:</strong> Aportes desde 100 ℙ.</li>
+            <li><strong>Liberación:</strong> Los fondos se transfieren al beneficiario únicamente al alcanzar el <strong>100% de la meta</strong> establecida.</li>
+        </ul>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">VIII. Sanciones por Incumplimiento y Juego Limpio</strong>
+        <p>Se prohíbe la extorsión, acoso financiero o préstamos usureros entre alumnos fuera de los canales oficiales. El BPD podrá congelar cuentas, confiscar activos y reportar faltas a la Dirección Académica.</p>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IX. Integridad Tecnológica y Seguridad del Sistema</strong>
+        <p>El banco se reserva el derecho de revertir transacciones por fallos técnicos. La manipulación deliberada del código o explotación de vulnerabilidades será considerada un <strong>Ciberataque Académico Grave</strong>, resultando en la expulsión inmediata e irrevocable del sistema y confiscación de activos.</p>
     `,
     
     acuerdoDePrivacidad: `
-        
-        <strong class="text-lg font-semibold text-slate-800 mb-2 block">I. Compromiso de la Entidad</strong>
-        <p>El Banco del Pincel Dorado (BPD) declara su firme compromiso con la máxima confidencialidad en el manejo de los datos operativos de sus Usuarios. La información es utilizada estrictamente para garantizar la funcionalidad, seguridad y estabilidad de este ecosistema académico-financiero.</p>
+        <strong class="text-lg font-semibold text-slate-800 mb-2 block">I. Compromiso de la Entidad y Transparencia Docente</strong>
+        <p>El BPD declara su compromiso con la confidencialidad operativa. El Usuario reconoce que el personal docente tiene acceso total a la información para auditoría y control de convivencia ética.</p>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">II. Datos Recopilados</strong>
-        <p>El BPD únicamente registra y procesa la siguiente información operativa, esencial para el funcionamiento del sistema:</p>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">II. Datos Registrados</strong>
+        <p>El BPD registra únicamente información esencial para el funcionamiento del ecosistema:</p>
         <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li><strong>Identificación:</strong> Nombre de Usuario y designación de Grupo Académico.</li>
-            <li><strong>Datos Financieros:</strong> Saldo actual de Pinceles (ℙ), el historial completo de Transacciones y la Clave P2P (gestionada de forma segura).</li>
-            <li><strong>Metadatos:</strong> Registros automáticos de la fecha, hora y tipo de cada operación.</li>
-        </ul>
-        <p class="mt-2 font-semibold">El BPD garantiza que no recopila ni almacena, bajo ninguna circunstancia, datos personales sensibles externos.</p>
-
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">III. Propósito de la Información</strong>
-        <p>El procesamiento de la información tiene por objeto exclusivo:</p>
-        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
-            <li>Asegurar la correcta y segura ejecución de todas las operaciones financieras.</li>
-            <li>Realizar los cálculos precisos de saldos, rendimientos de inversión e intereses crediticios.</li>
-            <li>Mantener el monitoreo continuo de la estabilidad económica y la detección preventiva de cualquier patrón de actividad anómala.</li>
-            <li>Garantizar el cumplimiento de las normativas internas del BPD.</li>
+            <li><strong>Identificación:</strong> Nombre del Usuario y Grupo Académico.</li>
+            <li><strong>Financieros:</strong> Saldo, historial de transacciones y Clave P2P cifrada.</li>
+            <li><strong>Metadatos:</strong> Registros de fecha, hora y tipo de operación para auditoría de seguridad.</li>
         </ul>
 
-        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IV. Confidencialidad y Uso</strong>
-        <p>El Usuario, al interactuar con el BPD, otorga su consentimiento para el procesamiento de sus datos de transacción. La información es de acceso altamente restringido y el BPD garantiza que no compartirá, venderá ni distribuirá datos de Usuarios a ninguna entidad ajena al entorno académico.</p>
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">III. Derechos ARCO</strong>
+        <p>Como Usuario, posee derechos de <strong>Acceso</strong> (consultar saldo), <strong>Rectificación</strong> (ajuste ante errores técnicos), <strong>Cancelación</strong> (cierre de cuenta con pérdida de activos) y <strong>Oposición</strong> al procesamiento no esencial.</p>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IV. Propósito de la Información</strong>
+        <p>Los datos se usan para asegurar transacciones, cálculos de rendimientos, cobro de impuestos y monitoreo de estabilidad. No se comparten datos fuera del entorno académico bajo ninguna circunstancia.</p>
+
+        <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Seguridad de la Clave P2P</strong>
+        <p>La Clave P2P es el único medio de validación personal. El Banco nunca la solicitará de forma verbal o informal. Es responsabilidad absoluta del estudiante custodiar este código para prevenir el uso no autorizado de sus fondos.</p>
     `
 };
 
