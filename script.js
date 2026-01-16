@@ -475,7 +475,7 @@ const AppUI = {
         const isSolvente = totalPinceles >= 0;
         const estadoCuentaBadge = isSolvente 
             ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Solvente</span>`
-            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">En Descubierto</span>`;
+            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">Saldo Deudor</span>`;
 
         // Generar HTML de productos activos (Diseño Minimalista)
         let productsHtml = '';
