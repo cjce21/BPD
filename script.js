@@ -13,7 +13,6 @@ const AppConfig = {
     APP_VERSION: 'v33.5', // Versión actualizada
     
     IMPUESTO_P2P_TASA: 0.0015,           
-    IMPUESTO_DEPOSITO_ADMIN: 0.05,
     TASA_ITBIS: 0.18,               
     
     PRESTAMO_TASA_BASE: 0.05,       
@@ -381,7 +380,6 @@ const AppUI = {
         document.getElementById('tienda-step-back-btn').addEventListener('click', AppUI.showTiendaStep1);
         document.getElementById('tienda-submit-step2-btn').addEventListener('click', AppTransacciones.confirmarCompra);
         document.getElementById('transaccion-submit-btn').addEventListener('click', AppTransacciones.realizarTransaccionMultiple);
-        document.getElementById('transaccion-cantidad-input').addEventListener('input', AppUI.updateAdminDepositoCalculo);
         document.getElementById('bono-admin-form').addEventListener('submit', (e) => { e.preventDefault(); AppTransacciones.crearActualizarBono(); });
         document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
         document.getElementById('tienda-admin-form').addEventListener('submit', (e) => { e.preventDefault(); AppTransacciones.crearActualizarItem(); });
@@ -2176,27 +2174,6 @@ const AppUI = {
         });
         
         container.innerHTML = html;
-    },
-    
-    updateAdminDepositoCalculo: function() {
-        const cantidadInput = document.getElementById('transaccion-cantidad-input');
-        const calculoMsg = document.getElementById('transaccion-calculo-impuesto');
-        const cantidad = parseInt(cantidadInput.value, 10);
-
-        if (isNaN(cantidad) || cantidad === 0) {
-            calculoMsg.textContent = "";
-            return;
-        }
-
-        if (cantidad > 0) {
-            const comision = Math.round(cantidad * AppConfig.IMPUESTO_DEPOSITO_ADMIN);
-            const costoNeto = cantidad - comision;
-
-            calculoMsg.innerHTML = `<span class="color-dorado-main">Monto a depositar: ${AppFormat.formatNumber(cantidad)} ℙ | Costo Neto Tesorería: ${AppFormat.formatNumber(costoNeto)} ℙ (Comisión: ${AppFormat.formatNumber(comision)} ℙ)</span>`;
-        } else {
-            const ingresoTotal = Math.abs(cantidad);
-            calculoMsg.innerHTML = `<span class="color-dorado-main">Monto a Multar: ${AppFormat.formatNumber(Math.abs(cantidad))} ℙ | Ingreso Neto Tesorería: ${AppFormat.formatNumber(ingresoTotal)} ℙ</span>`;
-        }
     },
 
     showTransaccionModal: function(tab) {
