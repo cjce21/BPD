@@ -10,7 +10,7 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v33.5', // Versión actualizada
+    APP_VERSION: 'v35.0', // Versión actualizada
     
     IMPUESTO_P2P_TASA: 0.0015,           
     TASA_ITBIS: 0.18,               
