@@ -422,7 +422,7 @@ body {
     color: #1f2937; 
     /* Quitamos el overflow hidden para el modal, lo maneja el modal-content */
     border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-2xl */
+    box-shadow: 0 20px 25px -1px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-2xl */
 }
 
 /* Estilos de las secciones dentro de la tarjeta compacta (definidas para el nuevo HTML) */
@@ -482,31 +482,18 @@ body {
 }
 
 /* =================================================================== */
-/* ANIMACIÓN ENLACE PORTAFOLIO (DIDAC-CLICK) */
+/* ANIMACIÓN ENLACE PORTAFOLIO (DIDAC-CLICK) - ANIMACIÓN ELIMINADA */
 /* =================================================================== */
-
-@keyframes goldPulseSlow {
-    0%, 100% {
-        color: #94a3b8; /* slate-400 (Gris original) */
-        text-shadow: none;
-    }
-    50% {
-        color: #d97706; /* amber-600 (Dorado BPD) */
-        text-shadow: 0 0 12px rgba(217, 119, 6, 0.4); /* Resplandor suave */
-        transform: scale(1.02); /* Ligerísimo aumento de tamaño */
-    }
-}
 
 .gold-pulse-link {
     display: inline-block;
     text-decoration: none;
-    animation: goldPulseSlow 3s ease-in-out infinite;
+    /* Animación de pulso eliminada para dejar el texto estático */
     transition: all 0.3s ease;
 }
 
 .gold-pulse-link:hover {
-    /* Al pasar el mouse, se queda dorado fijo y subraya */
-    animation: none;
+    /* Al pasar el mouse, se queda dorado y subraya */
     color: #d97706;
     text-shadow: 0 0 15px rgba(217, 119, 6, 0.6);
     text-decoration: underline;
@@ -595,7 +582,7 @@ body::before {
     border-radius: 50%;
     opacity: 0.9; /* AJUSTADO: Un poco más opaco */
     
-    /* Animación más rápida y con vaivén sutil */
+    /* Animación más lenta y con vaivén sutil */
     animation: 
         snow-fall 10s linear infinite,
         snow-sway-1 3s ease-in-out infinite alternate;
