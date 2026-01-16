@@ -475,13 +475,14 @@ const AppUI = {
         const isSolvente = totalPinceles >= 0;
         const estadoCuentaBadge = isSolvente 
             ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Solvente</span>`
-            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">Saldo Deudor</span>`;
+            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">Sobregirado</span>`;
 
-        // Generar HTML de productos activos (Diseño Minimalista)
+        // Generar HTML de productos activos (Diseño Minimalista - Variaciones de Dorado)
         let productsHtml = '';
         if (prestamoActivo) {
+             // Préstamo: Dorado Oscuro / Bronce (border-amber-700)
              productsHtml += `
-                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-red-500 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-amber-700 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
                     <div class="pl-2">
                         <p class="text-xs font-bold text-slate-800">Préstamo Activo</p>
                         <p class="text-[10px] text-slate-500">Pago pendiente</p>
@@ -491,8 +492,9 @@ const AppUI = {
         if (depositoActivo) {
             const vencimiento = new Date(depositoActivo.vencimiento);
             const fechaString = AppFormat.formatDateSimple(vencimiento);
+            // Inversión: Dorado Brillante (border-yellow-400)
             productsHtml += `
-                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-emerald-500 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-yellow-400 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
                     <div class="pl-2">
                         <p class="text-xs font-bold text-slate-800">Inversión Activa</p>
                         <p class="text-[10px] text-slate-500">Vence: ${fechaString}</p>
