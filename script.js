@@ -454,7 +454,7 @@ const AppUI = {
         }, 500); 
     },
 
-    // --- Tarjeta de Alumno Rediseñada (Estilo Bancario Compacto) ---
+// --- Tarjeta de Alumno Rediseñada (Estilo Bancario Compacto - Minimalista White - SIN AVATAR) ---
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         
@@ -471,26 +471,20 @@ const AppUI = {
             .filter(deposito => (deposito.alumno || '').trim() === (student.nombre || '').trim() && deposito.estado.startsWith('Activo'))
             .reduce((sum, deposito) => sum + (Number(deposito.monto) || 0), 0);
 
-        // Generar Iniciales para el Avatar
-        const iniciales = student.nombre.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-
-        // Badge de Estado de Cuenta
+        // Badge de Estado de Cuenta (Más sutil)
         const isSolvente = totalPinceles >= 0;
         const estadoCuentaBadge = isSolvente 
-            ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Solvente</span>`
-            : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">En Descubierto</span>`;
+            ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Solvente</span>`
+            : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">En Descubierto</span>`;
 
-        // Generar HTML de productos activos (Préstamos/Depósitos)
+        // Generar HTML de productos activos (Diseño Minimalista)
         let productsHtml = '';
         if (prestamoActivo) {
              productsHtml += `
-                <div class="flex items-center p-3 bg-red-50 rounded-lg border border-red-100 mb-2 shadow-sm">
-                    <div class="p-2 bg-white rounded-full text-red-500 mr-3 shadow-sm border border-red-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-red-700">Préstamo Activo</p>
-                        <p class="text-xs text-red-600">Monto pendiente de pago</p>
+                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-red-500 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                    <div class="pl-2">
+                        <p class="text-xs font-bold text-slate-800">Préstamo Activo</p>
+                        <p class="text-[10px] text-slate-500">Pago pendiente</p>
                     </div>
                 </div>`;
         }
@@ -498,66 +492,59 @@ const AppUI = {
             const vencimiento = new Date(depositoActivo.vencimiento);
             const fechaString = AppFormat.formatDateSimple(vencimiento);
             productsHtml += `
-                <div class="flex items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100 mb-2 shadow-sm">
-                    <div class="p-2 bg-white rounded-full text-emerald-600 mr-3 shadow-sm border border-emerald-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-emerald-700">Inversión Activa</p>
-                        <p class="text-xs text-emerald-600">Vence: ${fechaString}</p>
+                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-emerald-500 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                    <div class="pl-2">
+                        <p class="text-xs font-bold text-slate-800">Inversión Activa</p>
+                        <p class="text-[10px] text-slate-500">Vence: ${fechaString}</p>
                     </div>
                 </div>`;
         }
 
-
         modalContent.innerHTML = `
-            <div class="personal-student-card bg-white overflow-hidden relative rounded-xl">
-                <!-- Header Decorativo (Background) -->
-                <div class="h-24 bg-gradient-to-r from-amber-500 to-amber-600 relative">
-                    <button onclick="AppUI.hideModal('student-modal')" class="modal-close-btn absolute top-2 right-2 text-white/80 hover:text-white text-2xl p-1 z-10 transition-colors">&times;</button>
-                </div>
+            <div class="personal-student-card bg-white w-full overflow-hidden relative">
+                <!-- Botón Cerrar (Sutil y absoluto) -->
+                <button onclick="AppUI.hideModal('student-modal')" class="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
                 
-                <!-- Contenido Principal (Superpuesto) -->
-                <div class="px-6 pb-6 -mt-12 relative">
-                    <!-- Perfil y Avatar -->
-                    <div class="flex flex-col items-center">
-                        <div class="w-24 h-24 bg-white p-1 rounded-full shadow-lg">
-                            <div class="w-full h-full bg-slate-100 rounded-full flex items-center justify-center text-2xl font-bold text-slate-400 border border-slate-200">
-                                ${iniciales}
-                            </div>
-                        </div>
-                        <h2 class="text-xl font-bold text-slate-800 mt-3 text-center leading-tight">${student.nombre}</h2>
-                        <div class="mt-2 flex items-center space-x-2">
-                            <span class="px-2 py-1 rounded-md bg-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-wide border border-slate-200">${student.grupoNombre}</span>
+                <div class="p-6">
+                    <!-- Cabecera: Solo Nombre (Sin Avatar) -->
+                    <div class="mb-6 pt-2">
+                        <h2 class="text-xl font-bold text-slate-900 truncate leading-tight">${student.nombre}</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs font-medium text-slate-500 truncate">${student.grupoNombre}</span>
                             ${estadoCuentaBadge}
                         </div>
                     </div>
 
-                    <!-- Balance Hero -->
-                    <div class="mt-6 text-center p-5 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner">
-                        <p class="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Saldo Disponible</p>
-                        <p class="text-4xl font-extrabold color-dorado-main tracking-tight">${AppFormat.formatNumber(totalPinceles)} ℙ</p>
+                    <!-- Saldo Principal (Hero, Minimalista, Oscuro) -->
+                    <div class="mb-6">
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Saldo Disponible</p>
+                        <p class="text-4xl font-black text-slate-800 tracking-tight font-tabular-nums">${AppFormat.formatNumber(totalPinceles)} ℙ</p>
                     </div>
 
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-2 gap-3 mt-4">
-                        <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
-                            <p class="text-xs text-slate-400 uppercase font-bold tracking-wide">Inversiones</p>
-                            <p class="text-lg font-bold text-slate-700">${AppFormat.formatNumber(totalInvertido)} ℙ</p>
+                    <!-- Grid de Estadísticas (Limpio, con bordes sutiles) -->
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 mb-2">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Inversiones</p>
+                            <p class="text-base font-bold text-slate-700 font-tabular-nums mt-0.5">${AppFormat.formatNumber(totalInvertido)} ℙ</p>
                         </div>
-                        <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm text-center">
-                            <p class="text-xs text-slate-400 uppercase font-bold tracking-wide">Ranking Global</p>
-                            <p class="text-lg font-bold text-slate-700">#${rank}</p>
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Ranking Global</p>
+                            <p class="text-base font-bold text-slate-700 font-tabular-nums mt-0.5">#${rank}</p>
                         </div>
                     </div>
                     
-                    <!-- Productos Activos -->
-                    ${productsHtml ? `<div class="mt-4 space-y-2">${productsHtml}</div>` : ''}
-
-                    <!-- Footer Simple (Sin ID) -->
-                    <div class="mt-6 text-center border-t border-slate-100 pt-4">
-                         <p class="text-xs text-slate-400 font-medium">Banco del Pincel Dorado</p>
-                    </div>
+                    <!-- Productos Activos (Alertas compactas) -->
+                    ${productsHtml ? `<div class="mt-4 pt-2 space-y-2 border-t border-slate-100">${productsHtml}</div>` : ''}
+                </div>
+                
+                <!-- Footer Decorativo Minimalista -->
+                <div class="bg-slate-50 px-6 py-2 border-t border-slate-100 flex justify-between items-center">
+                     <span class="text-[10px] font-semibold text-slate-400 tracking-wider">BPD ID CARD</span>
+                     <span class="w-2 h-2 rounded-full bg-slate-300"></span>
                 </div>
             </div>
         `;
