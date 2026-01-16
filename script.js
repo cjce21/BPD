@@ -477,30 +477,31 @@ const AppUI = {
             ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Solvente</span>`
             : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">Sobregirado</span>`;
 
-        // Generar HTML de productos activos (Diseño Minimalista - Variaciones de Dorado)
+        // Generar HTML de productos activos (Diseño Minimalista - Variaciones de Dorado con Texto Colorido)
         let productsHtml = '';
         if (prestamoActivo) {
-             // Préstamo: Dorado Oscuro / Bronce (border-amber-700)
+             // Préstamo: Dorado Oscuro / Bronce (Deuda) - Fondo suave y texto oscuro para contraste
              productsHtml += `
-                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-amber-700 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                <div class="flex items-center p-2 mb-2 bg-amber-50 border-l-4 border-amber-700 shadow-sm border-t border-r border-b border-amber-100 rounded-r">
                     <div class="pl-2">
-                        <p class="text-xs font-bold text-slate-800">Préstamo Activo</p>
-                        <p class="text-[10px] text-slate-500">Pago pendiente</p>
+                        <p class="text-xs font-bold text-amber-900">Préstamo Activo</p>
+                        <p class="text-[10px] text-amber-700">Pago pendiente</p>
                     </div>
                 </div>`;
         }
         if (depositoActivo) {
             const vencimiento = new Date(depositoActivo.vencimiento);
             const fechaString = AppFormat.formatDateSimple(vencimiento);
-            // Inversión: Dorado Brillante (border-yellow-400)
+            // Inversión: Dorado Brillante / Amarillo (Activo) - Fondo suave y texto ocre
             productsHtml += `
-                <div class="flex items-center p-2 mb-2 bg-white border-l-4 border-yellow-400 shadow-sm border-t border-r border-b border-slate-100 rounded-r">
+                <div class="flex items-center p-2 mb-2 bg-yellow-50 border-l-4 border-yellow-400 shadow-sm border-t border-r border-b border-yellow-100 rounded-r">
                     <div class="pl-2">
-                        <p class="text-xs font-bold text-slate-800">Inversión Activa</p>
-                        <p class="text-[10px] text-slate-500">Vence: ${fechaString}</p>
+                        <p class="text-xs font-bold text-yellow-800">Inversión Activa</p>
+                        <p class="text-[10px] text-yellow-600">Vence: ${fechaString}</p>
                     </div>
                 </div>`;
         }
+
 
         modalContent.innerHTML = `
             <div class="personal-student-card bg-white w-full overflow-hidden relative">
