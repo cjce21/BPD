@@ -613,110 +613,80 @@ body::after {
         snow-fall 20s linear infinite,
         snow-sway-3 7s ease-in-out infinite alternate;
 }
-/* --- ESTILOS PARA SOCIOS DEL BANCO (Con Animación) --- */
 
+/* =========================================
+   ESTILOS PARA SOCIOS DEL BANCO (VIP)
+   Versión: Fondo Dorado Constante + Brillo Lento
+   ========================================= */
+
+/* --- 1. FILA DE SOCIO (Contenedor) --- */
 .socio-row {
-    background: linear-gradient(90deg, rgba(218, 165, 32, 0.15) 0%, rgba(255, 255, 255, 0) 80%);
-    transition: background 0.3s ease;
-}
-
-.socio-row:hover {
-    background: linear-gradient(90deg, rgba(218, 165, 32, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
-}
-
-.socio-badge {
-    background-color: #DAA520;
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 7px;
-    border-radius: 12px;
-    margin-left: 8px;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    vertical-align: middle;
-    box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    display: inline-block;
-    position: relative; /* Necesario para la animación */
-    overflow: hidden;   /* Para que el brillo no se salga de la etiqueta */
-}
-
-/* El destello de luz */
-.socio-badge::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -150%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.6), 
-        transparent
-    );
-    transform: skewX(-20deg);
-    animation: shimmer 4s infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -150%; }
-    20% { left: 150%; } /* Cruza rápido */
-    100% { left: 150%; } /* Espera */
-}
-/* --- ESTILOS PARA SOCIOS DEL BANCO (Versión Animada v1.0) --- */
-
-.socio-row {
-    /* Fondo degradado suave (Dorado transparente a transparente total) */
-    background: linear-gradient(90deg, rgba(218, 165, 32, 0.15) 0%, rgba(255, 255, 255, 0) 80%);
-    transition: background 0.3s ease;
-}
-
-.socio-row:hover {
-    background: linear-gradient(90deg, rgba(218, 165, 32, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
-}
-
-.socio-badge {
-    background-color: #DAA520; /* Dorado */
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 7px;
-    border-radius: 12px;
-    margin-left: 8px;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    vertical-align: middle;
-    box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    display: inline-block;
+    /* Fondo Base: Dorado suave constante (siempre visible) */
+    background-color: rgba(218, 165, 32, 0.15); 
     
-    /* Preparación para el brillo animado */
-    position: relative; 
-    overflow: hidden;   
-}
-
-/* El destello de luz animado */
-.socio-badge::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -150%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.6), 
-        transparent
+    /* Degradado Animado: Haz de luz blanca que pasa */
+    background-image: linear-gradient(
+        110deg, 
+        transparent 0%, 
+        transparent 45%, 
+        rgba(255, 255, 255, 0.7) 50%,  /* Luz blanca central intensa */
+        transparent 55%, 
+        transparent 100%
     );
-    transform: skewX(-20deg);
-    animation: shimmer 4s infinite;
+    
+    /* Configuración del fondo para la animación */
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    
+    /* Borde izquierdo dorado para destacar */
+    border-left: 3px solid #DAA520; 
+    
+    /* Posicionamiento y transiciones suaves */
+    position: relative;
+    transition: all 0.3s ease;
+    
+    /* Animación: Lenta (7s), Lineal (sin aceleración) e Infinita */
+    animation: backgroundPass 7s linear infinite;
 }
 
-@keyframes shimmer {
-    0% { left: -150%; }
-    20% { left: 150%; } /* Cruza rápido */
-    100% { left: 150%; } /* Espera */
+/* Lógica de movimiento: De derecha a izquierda, constante */
+@keyframes backgroundPass {
+    0% { 
+        background-position: 200% 0; /* Empieza fuera a la derecha */
+    }
+    100% { 
+        background-position: -150% 0; /* Termina fuera a la izquierda */
+    }
+}
+
+/* --- 2. EFECTO HOVER EN LA FILA --- */
+.socio-row:hover {
+    background-color: rgba(218, 165, 32, 0.22); /* Se oscurece un poco al pasar el mouse */
+    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.15); /* Sombra dorada */
+    transform: translateY(-1px); /* Pequeña elevación */
+    z-index: 10; /* Se pone por encima de otras filas */
+    border-left-width: 5px; /* El borde izquierdo crece */
+}
+
+/* --- 3. ETIQUETA "SOCIO" (Estática y Redondeada) --- */
+.socio-badge {
+    background-color: #DAA520; 
+    color: #fff;
+    
+    /* Tamaño y forma redondeada (Píldora) */
+    font-size: 0.5rem;      
+    padding: 2px 8px;       
+    border-radius: 9999px;  
+    margin-left: 8px;       
+    
+    /* Sombra suave para profundidad */
+    box-shadow: 0 1px 2px rgba(218, 165, 32, 0.4);
+    
+    /* Tipografía */
+    text-transform: uppercase;
+    font-weight: 800; 
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 1.2;
 }
