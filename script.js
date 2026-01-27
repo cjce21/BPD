@@ -4342,7 +4342,7 @@ window.onload = function() {
         setupSliderFill();
         
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => {
-             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {\n                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
+             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
              }
              if (e.target.id === 'transacciones-combinadas-modal') {
                  AppUI.hideModal('transacciones-combinadas-modal');
