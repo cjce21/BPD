@@ -1251,8 +1251,22 @@ const AppUI = {
              } else {
                  filteredStudents.forEach(student => {
                      const div = document.createElement('div');
-                     div.className = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
-                     div.textContent = `${student.nombre} (${student.grupoNombre})`;
+                     
+                     // --- NUEVO: Lógica SOCIO Buscador ---
+                     const esSocio = student.etiqueta && student.etiqueta.toUpperCase() === 'SOCIO';
+                     let extraHtml = '';
+                     let divClass = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
+                     
+                     if (esSocio) {
+                         divClass += ' socio-row';
+                         extraHtml = ' <span class="socio-badge" style="font-size: 0.6em;">SOCIO</span>';
+                     }
+                     div.className = divClass;
+                     // ------------------------------------
+
+                     // Usamos innerHTML en vez de textContent para que se vea el badge
+                     div.innerHTML = `${student.nombre} <span class="text-slate-500">(${student.grupoNombre})</span>${extraHtml}`;
+                     
                      div.onclick = () => {
                          const input = document.getElementById(inputId);
                          input.value = student.nombre;
@@ -2067,7 +2081,7 @@ const AppUI = {
         const causa = AppState.causas.items[idCausa];
         if (!causa) return;
         if (causa.estado !== 'Activa') {
-             AppTransacciones.setError(document.getElementById('donaciones-status-msg'), `La causa "${causa.titulo}" ya está ${causa.estado.toLowerCase()}.`);
+             AppTransacciones.setError(document.getElementById('donaciones-status-msg'), `La causa "${causa.titulo}" ya está ${causa.estado.toLowerCase()} y no acepta más donaciones.`);
              return;
         }
 
@@ -2672,16 +2686,28 @@ const AppUI = {
             const usuarioNombreEscapado = escapeHTML(usuario.nombre);
 
             const itemDiv = document.createElement('div');
-            itemDiv.className = `grid grid-cols-12 px-6 py-3 hover:bg-slate-100 cursor-pointer transition-colors`;
+            
+            // --- NUEVO: Lógica SOCIO ---
+            const esSocio = usuario.etiqueta && usuario.etiqueta.toUpperCase() === 'SOCIO';
+            let rowClass = "grid grid-cols-12 px-6 py-3 hover:bg-slate-100 cursor-pointer transition-colors";
+            
+            // Si es socio, añadimos la clase visual y preparamos el badge
+            let htmlBadge = '';
+            if (esSocio) {
+                rowClass += " socio-row"; // Clase del CSS
+                htmlBadge = ' <span class="socio-badge">SOCIO</span>';
+            }
+            // ---------------------------
 
+            itemDiv.className = rowClass;
             itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
 
             itemDiv.innerHTML = `
                 <div class="col-span-1 text-center font-extrabold ${rankTextClass} text-lg">
                     ${pos}
                 </div>
-                <div class="col-span-8 text-left text-sm font-medium text-slate-900 truncate">
-                    ${usuario.nombre}
+                <div class="col-span-8 text-left text-sm font-medium text-slate-900 truncate flex items-center">
+                    ${usuario.nombre}${htmlBadge}
                 </div>
                 <div class="col-span-3 text-right text-sm font-semibold ${pincelesColor}">
                     ${AppFormat.formatNumber(usuario.pinceles)} ℙ
@@ -4316,8 +4342,7 @@ window.onload = function() {
         setupSliderFill();
         
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => {
-             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {
-                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
+             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {\n                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
              }
              if (e.target.id === 'transacciones-combinadas-modal') {
                  AppUI.hideModal('transacciones-combinadas-modal');
