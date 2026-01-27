@@ -85,14 +85,14 @@ const AppState = {
         selectedItem: null,
     },
     
-    // NUEVO: Módulo de Causas
+       // NUEVO: Módulo de Causas
     causas: {
         items: {},
         selectedCausa: null,
     },
 
     heroSlideIndex: 0,
-    heroSlideCount: 7, // Ajustado a 7 slides (0, 1, 2, 3, 4, 5, 6)
+    heroSlideCount: 8, // CAMBIO AQUÍ: Cambia el 7 por un 8
 };
 
 // --- AUTENTICACIÓN ---
