@@ -615,8 +615,9 @@ body::after {
 }
 
 /* =========================================
-   ESTILOS PARA SOCIOS DEL BANCO (VIP)
+   ESTILOS PARA SOCIOS DEL BANCO (VIP - GOLD)
    Versión: Fondo Dorado Constante + Brillo Lento
+   Sin borde lateral
    ========================================= */
 
 /* --- 1. FILA DE SOCIO (Contenedor) --- */
@@ -637,9 +638,6 @@ body::after {
     /* Configuración del fondo para la animación */
     background-size: 250% 100%;
     background-repeat: no-repeat;
-    
-    /* Borde izquierdo dorado para destacar */
-    border-left: 3px solid #DAA520; 
     
     /* Posicionamiento y transiciones suaves */
     position: relative;
@@ -665,7 +663,6 @@ body::after {
     box-shadow: 0 4px 12px rgba(218, 165, 32, 0.15); /* Sombra dorada */
     transform: translateY(-1px); /* Pequeña elevación */
     z-index: 10; /* Se pone por encima de otras filas */
-    border-left-width: 5px; /* El borde izquierdo crece */
 }
 
 /* --- 3. ETIQUETA "SOCIO" (Estática y Redondeada) --- */
