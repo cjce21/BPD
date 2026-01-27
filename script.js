@@ -4270,6 +4270,14 @@ const AppContent = {
 
         <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IX. Integridad Tecnológica y Seguridad del Sistema</strong>
         <p>El banco se reserva el derecho de revertir transacciones por fallos técnicos. La manipulación deliberada del código o explotación de vulnerabilidades será considerada un <strong>Ciberataque Académico Grave</strong>, resultando en la expulsión inmediata e irrevocable del sistema y confiscación de activos.</p>
+    
+    <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">X. Estatuto de Socio Corporativo (VIP)</strong>
+        <p>El estatus de Socio es una distinción financiera especial dentro del ecosistema BPD.</p>
+        <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+            <li><strong>Dividendo Preferente:</strong> Los socios reciben una asignación diaria automática de fondos adicionales (Dividendos) por su participación.</li>
+            <li><strong>Adquisición:</strong> Este estatus se obtiene mediante la compra de la Membresía oficial en la Tienda (sujeto a disponibilidad) o por concesión directa docente basada en méritos.</li>
+            <li><strong>Visibilidad Pública:</strong> El estatus es de carácter público y se reflejará con un distintivo visual en los rankings generales para denotar prestigio institucional.</li>
+        </ul>
     `,
     
     acuerdoDePrivacidad: `
@@ -4288,7 +4296,7 @@ const AppContent = {
         <p>Como Usuario, posee derechos de <strong>Acceso</strong> (consultar saldo), <strong>Rectificación</strong> (ajuste ante errores técnicos), <strong>Cancelación</strong> (cierre de cuenta con pérdida de activos) y <strong>Oposición</strong> al procesamiento no esencial.</p>
 
         <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">IV. Propósito de la Información</strong>
-        <p>Los datos se usan para asegurar transacciones, cálculos de rendimientos, cobro de impuestos y monitoreo de estabilidad. No se comparten datos fuera del entorno académico bajo ninguna circunstancia.</p>
+        <p>Los datos se usan para asegurar transacciones, cálculos de rendimientos, cobro de impuestos y monitoreo de estabilidad. No se comparten datos fuera del entorno académico bajo ninguna circunstancia. El distintivo de "Socio" es un dato público dentro de la plataforma.</p>
 
         <strong class="text-lg font-semibold text-slate-800 mt-6 mb-2 block">V. Seguridad de la Clave P2P</strong>
         <p>La Clave P2P es el único medio de validación personal. El Banco nunca la solicitará de forma verbal o informal. Es responsabilidad absoluta del estudiante custodiar este código para prevenir el uso no autorizado de sus fondos.</p>
