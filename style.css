@@ -613,3 +613,110 @@ body::after {
         snow-fall 20s linear infinite,
         snow-sway-3 7s ease-in-out infinite alternate;
 }
+/* --- ESTILOS PARA SOCIOS DEL BANCO (Con Animación) --- */
+
+.socio-row {
+    background: linear-gradient(90deg, rgba(218, 165, 32, 0.15) 0%, rgba(255, 255, 255, 0) 80%);
+    transition: background 0.3s ease;
+}
+
+.socio-row:hover {
+    background: linear-gradient(90deg, rgba(218, 165, 32, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
+}
+
+.socio-badge {
+    background-color: #DAA520;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-block;
+    position: relative; /* Necesario para la animación */
+    overflow: hidden;   /* Para que el brillo no se salga de la etiqueta */
+}
+
+/* El destello de luz */
+.socio-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.6), 
+        transparent
+    );
+    transform: skewX(-20deg);
+    animation: shimmer 4s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -150%; }
+    20% { left: 150%; } /* Cruza rápido */
+    100% { left: 150%; } /* Espera */
+}
+/* --- ESTILOS PARA SOCIOS DEL BANCO (Versión Animada v1.0) --- */
+
+.socio-row {
+    /* Fondo degradado suave (Dorado transparente a transparente total) */
+    background: linear-gradient(90deg, rgba(218, 165, 32, 0.15) 0%, rgba(255, 255, 255, 0) 80%);
+    transition: background 0.3s ease;
+}
+
+.socio-row:hover {
+    background: linear-gradient(90deg, rgba(218, 165, 32, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
+}
+
+.socio-badge {
+    background-color: #DAA520; /* Dorado */
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-block;
+    
+    /* Preparación para el brillo animado */
+    position: relative; 
+    overflow: hidden;   
+}
+
+/* El destello de luz animado */
+.socio-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.6), 
+        transparent
+    );
+    transform: skewX(-20deg);
+    animation: shimmer 4s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -150%; }
+    20% { left: 150%; } /* Cruza rápido */
+    100% { left: 150%; } /* Espera */
+}
