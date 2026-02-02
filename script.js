@@ -92,7 +92,7 @@ const AppState = {
     },
 
     heroSlideIndex: 0,
-    heroSlideCount: 8, // CAMBIO AQUÍ: Cambia el 7 por un 8
+    heroSlideCount: 8, 
 };
 
 // --- AUTENTICACIÓN ---
@@ -105,63 +105,22 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-    // Da formato de miles (ej: 1,200)
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(Math.round(num)),
-    
-    // Convierte fechas para guardarlas
     toLocalISOString: (date) => {
         const pad = (num) => String(num).padStart(2, '0');
         const d = new Date(date);
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     },
-    
-    // Muestra fechas simples (ej: 02/02/2026)
     formatDateSimple: (date) => {
         if (!date) return 'N/A';
         const d = new Date(date);
         const pad = (num) => String(num).padStart(2, '0');
         return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
     },
-    
-    // Cálculos de tasas
     calculateLoanRate: (days) => Math.min(AppConfig.PRESTAMO_TASA_BASE + (days * AppConfig.PRESTAMO_BONUS_POR_DIA), 1.0),
-    calculateDepositRate: (days) => Math.min(AppConfig.DEPOSITO_TASA_BASE + (days * AppConfig.DEPOSITO_BONUS_POR_DIA), 1.0),
-    
-    // NUEVO: AQUÍ ESTÁ LA MAGIA DE LOS SOCIOS
-    getSocioData: (etiqueta) => {
-        if (!etiqueta) return null;
-        const tag = etiqueta.toUpperCase().trim();
-        
-        // SOCIO ORO (Se activa con etiqueta "SOCIO" u "ORO")
-        if (tag === 'SOCIO' || tag === 'ORO') {
-            return {
-                type: 'gold',
-                label: 'SOCIO',
-                rowClass: 'socio-row-gold',   // Clase CSS para fondo dorado
-                badgeClass: 'socio-badge-gold' // Clase CSS para la insignia dorada
-            };
-        } 
-        // SOCIO PLATA (Se activa con etiqueta "PLATA")
-        else if (tag === 'PLATA') {
-            return {
-                type: 'silver',
-                label: 'PLATA',
-                rowClass: 'socio-row-silver',
-                badgeClass: 'socio-badge-silver'
-            };
-        } 
-        // SOCIO BRONCE (Se activa con etiqueta "BRONCE")
-        else if (tag === 'BRONCE') {
-            return {
-                type: 'bronze',
-                label: 'BRONCE',
-                rowClass: 'socio-row-bronze',
-                badgeClass: 'socio-badge-bronze'
-            };
-        }
-        return null;
-    }
+    calculateDepositRate: (days) => Math.min(AppConfig.DEPOSITO_TASA_BASE + (days * AppConfig.DEPOSITO_BONUS_POR_DIA), 1.0)
 };
+
 // --- MANEJO DE DATOS ---
 const AppData = {
     
@@ -495,7 +454,6 @@ const AppUI = {
         }, 500); 
     },
 
-// --- Tarjeta de Alumno Rediseñada (Estilo Bancario Compacto - Minimalista White - SIN AVATAR) ---
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         
@@ -507,21 +465,17 @@ const AppUI = {
         const prestamoActivo = AppState.datosAdicionales.prestamosActivos.find(p => p.alumno === student.nombre);
         const depositoActivo = AppState.datosAdicionales.depositosActivos.find(d => d.alumno === student.nombre);
 
-        // Calcular Capital Invertido
         const totalInvertido = AppState.datosAdicionales.depositosActivos
             .filter(deposito => (deposito.alumno || '').trim() === (student.nombre || '').trim() && deposito.estado.startsWith('Activo'))
             .reduce((sum, deposito) => sum + (Number(deposito.monto) || 0), 0);
 
-        // Badge de Estado de Cuenta (Más sutil)
         const isSolvente = totalPinceles >= 0;
         const estadoCuentaBadge = isSolvente 
             ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Solvente</span>`
             : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">Sobregirado</span>`;
 
-        // Generar HTML de productos activos (Diseño Minimalista - Variaciones de Dorado con Texto Colorido)
         let productsHtml = '';
         if (prestamoActivo) {
-             // Préstamo: Dorado Oscuro / Bronce (Deuda) - Fondo suave y texto oscuro para contraste
              productsHtml += `
                 <div class="flex items-center p-2 mb-2 bg-amber-50 border-l-4 border-amber-700 shadow-sm border-t border-r border-b border-amber-100 rounded-r">
                     <div class="pl-2">
@@ -533,7 +487,6 @@ const AppUI = {
         if (depositoActivo) {
             const vencimiento = new Date(depositoActivo.vencimiento);
             const fechaString = AppFormat.formatDateSimple(vencimiento);
-            // Inversión: Dorado Brillante / Amarillo (Activo) - Fondo suave y texto ocre
             productsHtml += `
                 <div class="flex items-center p-2 mb-2 bg-yellow-50 border-l-4 border-yellow-400 shadow-sm border-t border-r border-b border-yellow-100 rounded-r">
                     <div class="pl-2">
@@ -546,7 +499,6 @@ const AppUI = {
 
         modalContent.innerHTML = `
             <div class="personal-student-card bg-white w-full overflow-hidden relative">
-                <!-- Botón Cerrar (Sutil y absoluto) -->
                 <button onclick="AppUI.hideModal('student-modal')" class="absolute top-4 right-4 text-slate-300 hover:text-slate-600 transition-colors z-10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -554,7 +506,6 @@ const AppUI = {
                 </button>
                 
                 <div class="p-6">
-                    <!-- Cabecera: Solo Nombre (Sin Avatar) -->
                     <div class="mb-6 pt-2">
                         <h2 class="text-xl font-bold text-slate-900 truncate leading-tight">${student.nombre}</h2>
                         <div class="flex items-center gap-2 mt-1">
@@ -563,13 +514,11 @@ const AppUI = {
                         </div>
                     </div>
 
-                    <!-- Saldo Principal (Hero, Minimalista, Oscuro) -->
                     <div class="mb-6">
                         <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Saldo Disponible</p>
                         <p class="text-4xl font-black text-slate-800 tracking-tight font-tabular-nums">${AppFormat.formatNumber(totalPinceles)} ℙ</p>
                     </div>
 
-                    <!-- Grid de Estadísticas (Limpio, con bordes sutiles) -->
                     <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 mb-2">
                         <div>
                             <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Inversiones</p>
@@ -581,11 +530,9 @@ const AppUI = {
                         </div>
                     </div>
                     
-                    <!-- Productos Activos (Alertas compactas) -->
                     ${productsHtml ? `<div class="mt-4 pt-2 space-y-2 border-t border-slate-100">${productsHtml}</div>` : ''}
                 </div>
                 
-                <!-- Footer Decorativo Minimalista -->
                 <div class="bg-slate-50 px-6 py-2 border-t border-slate-100 flex justify-between items-center">
                      <span class="text-[10px] font-semibold text-slate-400 tracking-wider">BPD ID CARD</span>
                      <span class="w-2 h-2 rounded-full bg-slate-300"></span>
@@ -595,7 +542,6 @@ const AppUI = {
         AppUI.showModal('student-modal');
     },
     
-    // --- FUNCIÓN DE INFORME DE CONFIRMACIÓN ---
     showSuccessSummary: function(modalId, reportData, reportType) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -608,7 +554,7 @@ const AppUI = {
         } else if (modalId === 'tienda-modal') {
              formContainerId = 'tienda-main-step-container';
              reportContainerId = 'tienda-report-container';
-        } else if (modalId === 'donaciones-modal') { // NUEVO
+        } else if (modalId === 'donaciones-modal') { 
             formContainerId = 'donaciones-main-step-container';
             reportContainerId = 'donaciones-report-container';
         } else if (modalId === 'transacciones-combinadas-modal') {
@@ -719,7 +665,7 @@ const AppUI = {
                     </div>
                 `;
                 break;
-            case 'donacion': // NUEVO
+            case 'donacion': 
                 title = 'Aporte Realizado';
                 const metaAlcanzada = reportData.estado_causa === 'Completada';
                 const estadoClase = metaAlcanzada ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
@@ -807,8 +753,6 @@ const AppUI = {
             });
         }
     },
-    
-    // --- FUNCIÓNES DE MODALES FLEXIBLES (PRESTAMOS Y DEPÓSITOS) ---
     
     showTransaccionesCombinadasModal: function(initialTab = 'p2p_transfer') {
         if (!AppState.datosActuales) return;
@@ -1030,10 +974,9 @@ const AppUI = {
             document.getElementById('bono-admin-status-msg').textContent = "";
             AppUI.clearTiendaAdminForm();
             document.getElementById('tienda-admin-status-msg').textContent = "";
-            AppUI.clearCausaAdminForm(); // NUEVO
-            document.getElementById('causa-admin-status-msg').textContent = ""; // NUEVO
+            AppUI.clearCausaAdminForm(); 
+            document.getElementById('causa-admin-status-msg').textContent = ""; 
             
-            // Limpiar mensaje de fecha
             document.getElementById('tienda-date-status-msg').textContent = "";
         }
         
@@ -1068,7 +1011,7 @@ const AppUI = {
             AppUI.showTiendaStep1();
         }
         
-        if (modalId === 'donaciones-modal') { // NUEVO
+        if (modalId === 'donaciones-modal') { 
             document.getElementById('donaciones-report-container').classList.add('hidden');
             document.getElementById('donaciones-main-step-container').classList.remove('hidden');
             AppUI.showDonacionesStep1();
@@ -1145,7 +1088,7 @@ const AppUI = {
             AppUI.populateTiendaAdminDate(); 
         } else if (tabId === 'tienda_inventario') { 
             AppUI.populateTiendaAdminList();
-        } else if (tabId === 'causas_admin') { // NUEVO
+        } else if (tabId === 'causas_admin') { 
             AppUI.populateCausasAdminList();
             AppUI.clearCausaAdminForm();
         }
@@ -1167,9 +1110,7 @@ const AppUI = {
             AppState.currentSearch[stateKey].selected = null; 
             AppState.currentSearch[stateKey].info = null;
             
-            // CORRECCIÓN 1: Evitar forzar el reset a 'Banco' al borrar el texto del input Beneficiario Admin
             if (stateKey === 'causaAdminBeneficiario' && query === '') {
-                 // Si el campo de admin queda vacío, solo se resetea el valor interno (no se fuerza 'Banco' en el input)
                  AppState.currentSearch.causaAdminBeneficiario.query = '';
                  AppState.currentSearch.causaAdminBeneficiario.selected = null;
                  AppState.currentSearch.causaAdminBeneficiario.info = null;
@@ -1205,7 +1146,6 @@ const AppUI = {
         }
     },
     
-    // --- FUNCIÓN DEL BUSCADOR ---
     handleStudentSearch: function(query, inputId, resultsId, stateKey, onSelectCallback) {
         const resultsContainer = document.getElementById(resultsId);
         
@@ -1217,16 +1157,13 @@ const AppUI = {
         const lowerQuery = query.toLowerCase();
         let searchTargets = [];
 
-        // Lógica especial para el Beneficiario Admin (Causas)
         if (stateKey === 'causaAdminBeneficiario') {
-             // 1. Añadir BANCO (Tesorería)
             searchTargets.push({
                 nombre: 'Banco',
                 display: 'Banco (Tesorería)',
                 type: 'Banco',
             });
             
-            // 2. Añadir ALUMNOS (Nombre)
             AppState.datosAdicionales.allStudents.forEach(s => {
                 searchTargets.push({
                     nombre: s.nombre,
@@ -1235,7 +1172,6 @@ const AppUI = {
                 });
             });
             
-            // 3. Añadir GRUPOS (Prefijo)
             AppState.datosAdicionales.allGroups.filter(n => n !== 'Cicla' && n !== 'Banco').forEach(g => {
                 searchTargets.push({
                     nombre: `GRUPO: ${g}`,
@@ -1274,10 +1210,8 @@ const AppUI = {
             return;
 
         } else {
-             // Lógica estándar para búsqueda de alumnos (P2P, Tienda, Bonos, etc.)
              let studentList = AppState.datosAdicionales.allStudents;
             
-             // Filtrar Cicla si no está permitido
              const ciclaAllowed = ['p2pDestino', 'prestamoAlumno', 'depositoAlumno', 'bonoAlumno', 'tiendaAlumno', 'causaDonante']; 
              if (!ciclaAllowed.includes(stateKey)) {
                  studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
@@ -1295,22 +1229,16 @@ const AppUI = {
                  filteredStudents.forEach(student => {
                      const div = document.createElement('div');
                      
-                     // --- NUEVO: Lógica SOCIO en Buscador ---
-                     const socioData = AppFormat.getSocioData(student.etiqueta);
-                     
+                     const esSocio = student.etiqueta && student.etiqueta.toUpperCase() === 'SOCIO';
                      let extraHtml = '';
                      let divClass = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
                      
-                     if (socioData) {
-                         // Aplicar fondo de color (Oro, Plata, Bronce)
-                         divClass += ` ${socioData.rowClass}`;
-                         // Añadir la insignia pequeña
-                         extraHtml = ` <span class="${socioData.badgeClass}" style="font-size: 0.6em;">${socioData.label}</span>`;
+                     if (esSocio) {
+                         divClass += ' socio-row';
+                         extraHtml = ' <span class="socio-badge" style="font-size: 0.6em;">SOCIO</span>';
                      }
                      div.className = divClass;
-                     // ------------------------------------
 
-                     // Usamos innerHTML para mostrar el badge
                      div.innerHTML = `${student.nombre} <span class="text-slate-500">(${student.grupoNombre})</span>${extraHtml}`;
                      
                      div.onclick = () => {
@@ -1330,6 +1258,7 @@ const AppUI = {
              resultsContainer.classList.remove('hidden');
         }
     },
+
     resetSearchInput: function(stateKey) {
         let inputIds = [];
         
@@ -1341,17 +1270,15 @@ const AppUI = {
              inputIds.push('bono-search-alumno-step2');
         } else if (stateKey === 'tiendaAlumno') {
              inputIds.push('tienda-search-alumno-step2');
-        } else if (stateKey === 'causaDonante') { // NUEVO
+        } else if (stateKey === 'causaDonante') { 
              inputIds.push('causa-search-alumno-step2');
-        } else if (stateKey === 'causaAdminBeneficiario') { // NUEVO
+        } else if (stateKey === 'causaAdminBeneficiario') { 
              inputIds.push('causa-admin-beneficiario-search');
-             // Resetear al valor por defecto 'Banco'
              AppState.currentSearch[stateKey].selected = 'Banco';
              AppState.currentSearch[stateKey].info = { nombre: 'Banco', grupoNombre: 'Banco' };
              
              const input = document.getElementById(inputIds[0]);
-             // CORRECCIÓN 1: Si se hace un reset forzado, sí se debe rellenar 'Banco'
-             if(input) input.value = 'Banco'; // Poner valor visible por defecto
+             if(input) input.value = 'Banco'; 
         } else {
             return;
         }
@@ -1379,23 +1306,12 @@ const AppUI = {
     },
     
     selectP2PStudent: function(student) { },
-    
     selectBonoStudent: function(student) { },
-
     selectTiendaStudent: function(student) {
         AppUI.updateTiendaButtonStates();
     },
-    
-    selectDonacionesStudent: function(student) { }, // NUEVO: Donante
-
-    selectAdminBeneficiario: function(selection) {
-        // La lógica de actualización de AppState.currentSearch ya está en handleStudentSearch
-        // Si la selección no es válida (ej. el usuario borra el texto), se establece a null en handleStudentSearch
-        if (!selection) {
-            // No hacemos nada, ya que el evento 'input' se encargó de ponerlo en null
-            // y no queremos forzar el texto 'Banco' aquí, solo en resetSearchInput.
-        }
-    },
+    selectDonacionesStudent: function(student) { }, 
+    selectAdminBeneficiario: function(selection) { },
 
     populateAdminGroupCheckboxes: function(containerId, entityType) {
         const container = document.getElementById(containerId);
@@ -1876,17 +1792,13 @@ const AppUI = {
         }
     },
     
-    // --- Rellenar el input de fecha del admin ---
     populateTiendaAdminDate: function() {
         const dateInput = document.getElementById('tienda-admin-date-input');
         if (!dateInput) return;
         
         if (AppState.tienda.nextOpeningDate) {
-            // La fecha viene en formato ISO, el input datetime-local la acepta directamente (hasta minutos)
-            // Asegurarnos de que el formato sea YYYY-MM-DDTHH:MM
             const d = new Date(AppState.tienda.nextOpeningDate);
             if (!isNaN(d.getTime())) {
-                // datetime-local espera 'YYYY-MM-DDThh:mm'
                 const pad = (n) => n.toString().padStart(2, '0');
                 const localISO = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
                 dateInput.value = localISO;
@@ -2007,8 +1919,6 @@ const AppUI = {
         AppUI.selectAdminGroupCheckboxes('tienda-admin-grupos-checkboxes-container', '');
     },
     
-    // --- NUEVAS FUNCIONES DE CAUSAS (ADMIN) ---
-
     populateCausasAdminList: function() {
         const tbody = document.getElementById('causas-admin-lista');
         const causas = AppState.causas.items ? Object.values(AppState.causas.items) : []; 
@@ -2063,13 +1973,10 @@ const AppUI = {
         document.getElementById('causa-admin-meta-input').value = causa.meta_total;
         document.getElementById('causa-admin-estado-input').value = causa.estado;
         
-        // Cargar el Beneficiario
         const beneficiaryInput = document.getElementById('causa-admin-beneficiario-search');
         
-        // 1. Establecer el valor visual del input
         beneficiaryInput.value = causa.beneficiario;
         
-        // 2. Establecer el estado interno para que el validador funcione
         AppState.currentSearch.causaAdminBeneficiario.query = causa.beneficiario;
         AppState.currentSearch.causaAdminBeneficiario.selected = causa.beneficiario;
         AppState.currentSearch.causaAdminBeneficiario.info = { 
@@ -2093,14 +2000,11 @@ const AppUI = {
         
         document.getElementById('causa-admin-id-input').classList.remove('disabled:bg-slate-100', 'disabled:opacity-70');
         
-        // Resetear el buscador de Beneficiario al valor por defecto 'Banco'
         AppUI.resetSearchInput('causaAdminBeneficiario'); 
         const input = document.getElementById('causa-admin-beneficiario-search');
         if(input) input.value = 'Banco';
     },
 
-    // --- NUEVAS FUNCIONES DE CAUSAS (USUARIO) ---
-    
     showDonacionesModal: function() {
         AppUI.showDonacionesStep1();
         AppUI.showModal('donaciones-modal');
@@ -2136,7 +2040,6 @@ const AppUI = {
         
         const faltante = Math.max(0, causa.meta_total - causa.monto_recaudado);
 
-        // La ID de la causa no es visible para el alumno, solo el título.
         document.getElementById('causa-form-title').textContent = `Aportar a: ${causa.titulo}`;
         document.getElementById('causa-meta-display').textContent = `${AppFormat.formatNumber(causa.meta_total)} ℙ`;
         document.getElementById('causa-recaudado-display').textContent = `${AppFormat.formatNumber(causa.monto_recaudado)} ℙ`;
@@ -2161,7 +2064,7 @@ const AppUI = {
         const container = document.getElementById('causas-lista-disponible');
         const causas = Object.values(AppState.causas.items);
         
-        const causasActivas = causas.filter(c => c.estado === 'Activa' || c.estado === 'Completada'); // Mostrar completadas para referencia
+        const causasActivas = causas.filter(c => c.estado === 'Activa' || c.estado === 'Completada'); 
 
         if (causasActivas.length === 0) {
             container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-4">No hay causas activas en este momento.</p>`;
@@ -2193,9 +2096,6 @@ const AppUI = {
                         </span>
                     </div>
                     
-                    <!-- PÁRRAFO DE DESCRIPCIÓN ELIMINADO POR REQUERIMIENTO DEL USUARIO -->
-                    
-                    <!-- Progreso -->
                     <div class="space-y-1 mb-2 mt-4">
                         <div class="w-full bg-slate-200 rounded-full h-1.5">
                             <div class="bg-amber-600 h-1.5 rounded-full progress-bar-fill" style="width: ${porcentaje}%"></div>
@@ -2209,7 +2109,6 @@ const AppUI = {
                         </div>
                     </div>
 
-                    <!-- Botón de Aporte -->
                     <div class="flex justify-end">
                         <button 
                             onclick="AppUI.showDonacionesStep2('${idEscapado}')" 
@@ -2548,9 +2447,7 @@ const AppUI = {
     goToHeroSlide: function(index) {
         if (index < 0 || index >= AppState.heroSlideCount) {
              index = Math.max(0, Math.min(index, AppState.heroSlideCount - 1));
-             // Si el índice es 6 (último), volver a 0
              if (index === 6) index = 0; 
-             // Si es 0 y se pedía un índice mayor que 6, volver a 0
              if (index === 0 && AppState.heroSlideIndex === 6) index = 0;
         }
         
@@ -2700,87 +2597,48 @@ const AppUI = {
         document.getElementById('home-modules-grid').classList.remove('hidden');
     },
 
-    // --- FUNCIÓN DE LA TABLA PRINCIPAL ---
     mostrarDatosGrupo: function(grupo) {
-        // Ocultar estadísticas y mostrar tabla
-        document.getElementById('home-stats-container').classList.add('hidden');
-        document.getElementById('table-container').classList.remove('hidden');
-        
-        // Título y Subtítulo
+        document.getElementById('page-subtitle').classList.remove('hidden');
+
         document.getElementById('main-header-title').textContent = grupo.nombre;
-        const subtitle = document.getElementById('page-subtitle');
-        subtitle.classList.remove('hidden');
-        subtitle.innerHTML = `Total del Grupo: <span class="font-bold color-dorado-main">${AppFormat.formatNumber(grupo.total)} ℙ</span>`;
-
-        // Ordenar usuarios por saldo
-        const usuarios = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
-
-        // Cabecera de la tabla
-        let html = `
-            <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-200">
-                            <tr>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">#</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Estudiante</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Saldo</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
+        
+        let totalColor = "text-amber-700"; 
+        
+        document.getElementById('page-subtitle').innerHTML = `
+            <h2 class="text-xl font-semibold text-slate-900">Total del Grupo: 
+                <span class="${totalColor}">${AppFormat.formatNumber(grupo.total)} ℙ</span>
+            </h2>
         `;
+        
+        const listContainer = document.getElementById('table-container');
+        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); 
 
-        // Generar filas
-        usuarios.forEach((usuario, index) => {
-            const rank = index + 1;
-            let rowClass = "hover:bg-slate-50 transition-colors cursor-pointer group"; 
-            let rankClass = "bg-slate-100 text-slate-600";
+        const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
+
+        const listBody = document.createElement('div');
+        listBody.className = "divide-y divide-amber-100"; 
+
+        usuariosOrdenados.forEach((usuario, index) => {
+            const pos = index + 1;
             
-            // Colores para el Top 3
-            if (rank === 1) rankClass = "bg-amber-100 text-amber-700";
-            if (rank === 2) rankClass = "bg-slate-200 text-slate-700";
-            if (rank === 3) rankClass = "bg-orange-100 text-orange-700";
+            const rankTextClass = 'color-dorado-main';
+            const pincelesColor = 'color-dorado-main';
+
+            const grupoNombreEscapado = escapeHTML(grupo.nombre);
+            const usuarioNombreEscapado = escapeHTML(usuario.nombre);
+
+            const itemDiv = document.createElement('div');
             
-            // --- NUEVO: DETECTAR Y PINTAR SOCIOS ---
-            // Aquí usamos la función del Bloque 1 para saber si es Oro, Plata o Bronce
-            const socioData = AppFormat.getSocioData(usuario.etiqueta);
-            let badgeHtml = '';
+            const esSocio = usuario.etiqueta && usuario.etiqueta.toUpperCase() === 'SOCIO';
+            let rowClass = "grid grid-cols-12 px-6 py-3 hover:bg-slate-100 cursor-pointer transition-colors";
             
-            if (socioData) {
-                // Añadir la clase especial (ej: socio-row-gold) a toda la fila
-                rowClass += ` ${socioData.rowClass}`; 
-                // Crear la insignia (badge) pequeña al lado del nombre
-                badgeHtml = `<span class="${socioData.badgeClass} ml-2">${socioData.label}</span>`;
+            let htmlBadge = '';
+            if (esSocio) {
+                rowClass += " socio-row"; 
+                htmlBadge = ' <span class="socio-badge">SOCIO</span>';
             }
 
-            const nombreEscapado = escapeHTML(usuario.nombre);
-            const grupoEscapado = escapeHTML(grupo.nombre);
-
-            html += `
-                <tr class="${rowClass}" onclick="AppUI.showStudentModal('${grupoEscapado}', '${nombreEscapado}', ${rank})">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${rankClass}">${rank}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-semibold text-slate-800 group-hover:color-dorado-main transition-colors flex items-center">
-                            ${usuario.nombre}
-                            ${badgeHtml} <!-- Aquí se inserta la etiqueta SOCIO/PLATA/BRONCE -->
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <span class="text-base font-bold text-slate-900 font-tabular-nums">${AppFormat.formatNumber(usuario.pinceles)} ℙ</span>
-                    </td>
-                </tr>
-            `;
-        });
-
-        html += `</tbody></table></div></div>`;
-        document.getElementById('table-container').innerHTML = html;
-    },
-    
-    // ---------------------------
-
-            itemDivclassName = rowClass;
+            itemDiv.className = rowClass;
             itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
 
             itemDiv.innerHTML = `
@@ -2821,13 +2679,11 @@ const AppUI = {
         document.getElementById('home-modules-grid').classList.add('hidden');
     },
     
-    // --- LÓGICA DE CONTADOR INTELIGENTE ---
     updateCountdown: function() {
         const now = new Date();
         let targetDate;
         let isManualDate = false;
 
-        // 1. Revisar si hay fecha manual configurada
         if (AppState.tienda.nextOpeningDate) {
             const manualDate = new Date(AppState.tienda.nextOpeningDate);
             if (!isNaN(manualDate.getTime())) {
@@ -2836,13 +2692,12 @@ const AppUI = {
             }
         }
 
-        // 2. Si no hay manual, usar lógica automática (Último Jueves)
         if (!targetDate) {
             const getLastThursday = (year, month) => {
                 const lastDayOfMonth = new Date(year, month + 1, 0);
                 let lastThursday = new Date(lastDayOfMonth);
                 lastThursday.setDate(lastThursday.getDate() - (lastThursday.getDay() + 3) % 7);
-                lastThursday.setHours(0, 0, 0, 0); // Inicio del día
+                lastThursday.setHours(0, 0, 0, 0); 
                 return lastThursday;
             };
 
@@ -2850,7 +2705,6 @@ const AppUI = {
             const currentMonth = now.getMonth();
             let autoDate = getLastThursday(currentYear, currentMonth);
             
-            // Si el jueves de este mes ya pasó (y se acabó el día), buscar el del siguiente
             const endOfAutoDate = new Date(autoDate);
             endOfAutoDate.setHours(23, 59, 59, 999);
 
@@ -2860,12 +2714,10 @@ const AppUI = {
             targetDate = autoDate;
         }
 
-        // 3. Definir estado de apertura basado en Manual Status vs Tiempo
         const timerEl = document.getElementById('countdown-timer');
         const messageEl = document.getElementById('store-message');
         const manualStatus = AppState.tienda.storeManualStatus;
 
-        // Prioridad 1: Estado Manual Forzado
         if (manualStatus === 'open') {
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
@@ -2877,17 +2729,12 @@ const AppUI = {
             messageEl.textContent = "Tienda Cerrada";
             AppState.tienda.isStoreOpen = false;
         } else {
-            // Prioridad 2: Automático (por fecha target)
-            // Calculamos ventana de apertura
-            
             let startTime = new Date(targetDate);
             let endTime = new Date(targetDate);
             
             if (isManualDate) {
-                // Si es fecha manual, asumimos que abre a esa hora y dura 24h por defecto
                 endTime.setTime(startTime.getTime() + (24 * 60 * 60 * 1000));
             } else {
-                // Auto: Jueves 00:00 a Jueves 23:59
                 startTime.setHours(0, 0, 0, 0);
                 endTime.setHours(23, 59, 59, 999);
             }
@@ -2902,12 +2749,8 @@ const AppUI = {
                 messageEl.classList.add('hidden');
                 AppState.tienda.isStoreOpen = false;
 
-                // Calcular distancia
                 let distance = startTime - now;
-                if (distance < 0) {
-                    // Si ya pasó la fecha, mostrar 00:00:00
-                    distance = 0;
-                }
+                if (distance < 0) distance = 0;
 
                 const f = (val) => String(val).padStart(2, '0');
                 const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
@@ -2924,7 +2767,6 @@ const AppUI = {
             }
         }
         
-        // Actualizar botones UI
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
             AppUI.updateTiendaButtonStates();
             AppUI.updateTiendaAdminStatusLabel();
@@ -3066,7 +2908,6 @@ const AppTransacciones = {
         }
     },
     
-    // ... Funciones de Transacción Mantenidas ...
     solicitarPrestamoFlexible: async function() {
         const btn = document.getElementById('prestamo-submit-btn');
         const statusMsg = document.getElementById('prestamo-status-msg');
@@ -3398,7 +3239,6 @@ const AppTransacciones = {
         }
     },
     
-    // --- NUEVO: Aporte a Causa (Donaciones) ---
     confirmarAporte: async function() {
         const statusMsg = document.getElementById('causa-step2-status-msg');
         const submitBtn = document.getElementById('donaciones-submit-step2-btn');
@@ -3437,7 +3277,6 @@ const AppTransacciones = {
             errorValidacion = "Saldo insuficiente para realizar el aporte.";
         } else if (montoAporte > (causa.meta_total - causa.monto_recaudado)) {
             const faltante = causa.meta_total - causa.monto_recaudado;
-            // Permitir que el último aporte exceda ligeramente, pero no por mucho más del 10%
             if (faltante > 0 && montoAporte > (faltante + (causa.meta_total * 0.10))) { 
                 errorValidacion = `El aporte excede demasiado el monto faltante (${AppFormat.formatNumber(faltante)} ℙ). Ajuste el monto.`;
             }
@@ -3867,7 +3706,6 @@ const AppTransacciones = {
         
         const itemIdInput = document.getElementById('tienda-admin-itemid-input');
         const nombreInput = document.getElementById('tienda-admin-nombre-input');
-        // La descripción ha sido eliminada del formulario, pero la mantenemos en el objeto de datos si existe en el HTML (para compatibilidad)
         const descInput = document.getElementById('tienda-admin-desc-input');
         const descripcion = descInput ? descInput.value.trim() : ''; 
 
@@ -3877,7 +3715,7 @@ const AppTransacciones = {
         const item = {
             ItemID: itemIdInput.value.trim(),
             Nombre: nombreInput.value.trim(),
-            Descripcion: descripcion, // Usar la descripción del input si existe
+            Descripcion: descripcion, 
             Tipo: document.getElementById('tienda-admin-tipo-input').value.trim(),
             PrecioBase: parseInt(precioInput.value, 10),
             Stock: parseInt(stockInput.value, 10),
@@ -4019,8 +3857,6 @@ const AppTransacciones = {
         }
     },
     
-    // --- NUEVO: FUNCIONES DE GESTIÓN DE CAUSAS (ADMIN) ---
-
     crearActualizarCausa: async function() {
         const statusMsg = document.getElementById('causa-admin-status-msg');
         const submitBtn = document.getElementById('causa-admin-submit-btn');
@@ -4030,7 +3866,6 @@ const AppTransacciones = {
         const metaInput = document.getElementById('causa-admin-meta-input');
         const estadoInput = document.getElementById('causa-admin-estado-input');
         
-        // Beneficiario se obtiene del estado del buscador
         const beneficiario = AppState.currentSearch.causaAdminBeneficiario.selected;
 
 
@@ -4038,7 +3873,7 @@ const AppTransacciones = {
             id_causa: idInput.value.trim().toUpperCase(),
             titulo: tituloInput.value.trim(),
             meta_total: parseInt(metaInput.value, 10),
-            descripcion: '', // La descripción se elimina del flujo por requerimiento del usuario.
+            descripcion: '', 
             beneficiario: beneficiario, 
             estado: estadoInput.value,
         };
@@ -4141,7 +3976,6 @@ const AppTransacciones = {
         } 
     },
     
-    // --- FUNCIONES DE GESTIÓN DE FECHA DE APERTURA ---
     guardarFechaApertura: async function() {
         const dateInput = document.getElementById('tienda-admin-date-input');
         const statusMsg = document.getElementById('tienda-date-status-msg');
@@ -4154,8 +3988,6 @@ const AppTransacciones = {
         AppTransacciones.setLoading(statusMsg, 'Guardando fecha...');
         
         try {
-            // Convertir a formato seguro (ISO) para el backend
-            // El input devuelve YYYY-MM-DDTHH:MM, lo convertimos a ISO completo
             const dateObj = new Date(dateInput.value);
             const isoString = dateObj.toISOString(); 
 
@@ -4190,7 +4022,7 @@ const AppTransacciones = {
             const payload = {
                 accion: 'admin_set_store_date',
                 clave: 'APPS_SCRIPT_ADMIN_TOKEN_PLACEHOLDER',
-                date: '' // Cadena vacía para borrar
+                date: '' 
             };
 
             const result = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
@@ -4223,7 +4055,6 @@ const AppTransacciones = {
                         if (json.error || json.success === false) return json;
                         if (json.success === true) return json;
                     } catch (e) {
-                         console.error("Fetch Error: Respuesta no es JSON y falló la conexión o el backend.", text.substring(0, 100));
                          throw new Error(`Error de comunicación: La API devolvió un formato inesperado.`);
                     }
                 } else {
@@ -4231,7 +4062,6 @@ const AppTransacciones = {
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                         console.error("Fetch Error: Falló el parseo final de JSON.", text.substring(0, 100));
                          throw new Error(`Error de sintaxis de datos: Contacte al administrador.`);
                     }
                 }
@@ -4386,11 +4216,9 @@ const AppContent = {
 
 function escapeHTML(str) {
     if (typeof str !== 'string') return str;
-    // Esto es para que las comillas simples funcionen en onclick="funcion('dato')"
     return str.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
 }
 
-// Exportar funciones a la ventana global para que los eventos onclick en el HTML las encuentren
 window.AppUI = AppUI;
 window.AppFormat = AppFormat;
 window.AppTransacciones = AppTransacciones;
@@ -4408,7 +4236,6 @@ window.AppTransacciones.iniciarCanje = AppTransacciones.iniciarCanje;
 window.AppUI.showLegalModal = AppUI.showLegalModal; 
 window.AppTransacciones.guardarFechaApertura = AppTransacciones.guardarFechaApertura;
 window.AppTransacciones.borrarFechaApertura = AppTransacciones.borrarFechaApertura;
-// NUEVO: Funciones de Causas
 window.AppUI.showDonacionesStep2 = AppUI.showDonacionesStep2;
 window.AppUI.handleEditCausa = AppUI.handleEditCausa;
 window.AppTransacciones.eliminarCausa = AppTransacciones.eliminarCausa;
@@ -4431,7 +4258,8 @@ window.onload = function() {
         setupSliderFill();
         
         document.getElementById('transacciones-combinadas-modal').addEventListener('click', (e) => {
-             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
+             if (e.target.classList.contains('tab-btn') && e.target.closest('#transacciones-combinadas-modal')) {
+                 AppUI.changeTransaccionesCombinadasTab(e.target.dataset.tab);
              }
              if (e.target.id === 'transacciones-combinadas-modal') {
                  AppUI.hideModal('transacciones-combinadas-modal');
@@ -4449,5 +4277,4 @@ window.onload = function() {
     document.querySelectorAll('.loading-shimmer-text, .loading-dot').forEach(el => {
         el.style.animationPlayState = 'running';
     });
-
 };
