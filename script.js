@@ -2780,7 +2780,7 @@ const AppUI = {
     
     // ---------------------------
 
-            itemDiv.className = rowClass;
+            itemDivclassName = rowClass;
             itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
 
             itemDiv.innerHTML = `
