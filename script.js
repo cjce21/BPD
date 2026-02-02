@@ -105,22 +105,63 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
+    // Da formato de miles (ej: 1,200)
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(Math.round(num)),
+    
+    // Convierte fechas para guardarlas
     toLocalISOString: (date) => {
         const pad = (num) => String(num).padStart(2, '0');
         const d = new Date(date);
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     },
+    
+    // Muestra fechas simples (ej: 02/02/2026)
     formatDateSimple: (date) => {
         if (!date) return 'N/A';
         const d = new Date(date);
         const pad = (num) => String(num).padStart(2, '0');
         return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
     },
+    
+    // Cálculos de tasas
     calculateLoanRate: (days) => Math.min(AppConfig.PRESTAMO_TASA_BASE + (days * AppConfig.PRESTAMO_BONUS_POR_DIA), 1.0),
-    calculateDepositRate: (days) => Math.min(AppConfig.DEPOSITO_TASA_BASE + (days * AppConfig.DEPOSITO_BONUS_POR_DIA), 1.0)
+    calculateDepositRate: (days) => Math.min(AppConfig.DEPOSITO_TASA_BASE + (days * AppConfig.DEPOSITO_BONUS_POR_DIA), 1.0),
+    
+    // NUEVO: AQUÍ ESTÁ LA MAGIA DE LOS SOCIOS
+    getSocioData: (etiqueta) => {
+        if (!etiqueta) return null;
+        const tag = etiqueta.toUpperCase().trim();
+        
+        // SOCIO ORO (Se activa con etiqueta "SOCIO" u "ORO")
+        if (tag === 'SOCIO' || tag === 'ORO') {
+            return {
+                type: 'gold',
+                label: 'SOCIO',
+                rowClass: 'socio-row-gold',   // Clase CSS para fondo dorado
+                badgeClass: 'socio-badge-gold' // Clase CSS para la insignia dorada
+            };
+        } 
+        // SOCIO PLATA (Se activa con etiqueta "PLATA")
+        else if (tag === 'PLATA') {
+            return {
+                type: 'silver',
+                label: 'PLATA',
+                rowClass: 'socio-row-silver',
+                badgeClass: 'socio-badge-silver'
+            };
+        } 
+        // SOCIO BRONCE (Se activa con etiqueta "BRONCE")
+        else if (tag === 'BRONCE') {
+            return {
+                type: 'bronze',
+                label: 'BRONCE',
+                rowClass: 'socio-row-bronze',
+                badgeClass: 'socio-badge-bronze'
+            };
+        }
+        return null;
+    }
 };
-
 // --- MANEJO DE DATOS ---
 const AppData = {
     
@@ -1164,6 +1205,7 @@ const AppUI = {
         }
     },
     
+    // --- FUNCIÓN DEL BUSCADOR ---
     handleStudentSearch: function(query, inputId, resultsId, stateKey, onSelectCallback) {
         const resultsContainer = document.getElementById(resultsId);
         
@@ -1175,7 +1217,7 @@ const AppUI = {
         const lowerQuery = query.toLowerCase();
         let searchTargets = [];
 
-        // Lógica especial para el Beneficiario Admin
+        // Lógica especial para el Beneficiario Admin (Causas)
         if (stateKey === 'causaAdminBeneficiario') {
              // 1. Añadir BANCO (Tesorería)
             searchTargets.push({
@@ -1232,9 +1274,10 @@ const AppUI = {
             return;
 
         } else {
-             // Lógica estándar para búsqueda de alumnos
+             // Lógica estándar para búsqueda de alumnos (P2P, Tienda, Bonos, etc.)
              let studentList = AppState.datosAdicionales.allStudents;
             
+             // Filtrar Cicla si no está permitido
              const ciclaAllowed = ['p2pDestino', 'prestamoAlumno', 'depositoAlumno', 'bonoAlumno', 'tiendaAlumno', 'causaDonante']; 
              if (!ciclaAllowed.includes(stateKey)) {
                  studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
@@ -1252,19 +1295,22 @@ const AppUI = {
                  filteredStudents.forEach(student => {
                      const div = document.createElement('div');
                      
-                     // --- NUEVO: Lógica SOCIO Buscador ---
-                     const esSocio = student.etiqueta && student.etiqueta.toUpperCase() === 'SOCIO';
+                     // --- NUEVO: Lógica SOCIO en Buscador ---
+                     const socioData = AppFormat.getSocioData(student.etiqueta);
+                     
                      let extraHtml = '';
                      let divClass = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
                      
-                     if (esSocio) {
-                         divClass += ' socio-row';
-                         extraHtml = ' <span class="socio-badge" style="font-size: 0.6em;">SOCIO</span>';
+                     if (socioData) {
+                         // Aplicar fondo de color (Oro, Plata, Bronce)
+                         divClass += ` ${socioData.rowClass}`;
+                         // Añadir la insignia pequeña
+                         extraHtml = ` <span class="${socioData.badgeClass}" style="font-size: 0.6em;">${socioData.label}</span>`;
                      }
                      div.className = divClass;
                      // ------------------------------------
 
-                     // Usamos innerHTML en vez de textContent para que se vea el badge
+                     // Usamos innerHTML para mostrar el badge
                      div.innerHTML = `${student.nombre} <span class="text-slate-500">(${student.grupoNombre})</span>${extraHtml}`;
                      
                      div.onclick = () => {
@@ -1284,7 +1330,6 @@ const AppUI = {
              resultsContainer.classList.remove('hidden');
         }
     },
-
     resetSearchInput: function(stateKey) {
         let inputIds = [];
         
@@ -2655,49 +2700,85 @@ const AppUI = {
         document.getElementById('home-modules-grid').classList.remove('hidden');
     },
 
+    // --- FUNCIÓN DE LA TABLA PRINCIPAL ---
     mostrarDatosGrupo: function(grupo) {
-        document.getElementById('page-subtitle').classList.remove('hidden');
-
+        // Ocultar estadísticas y mostrar tabla
+        document.getElementById('home-stats-container').classList.add('hidden');
+        document.getElementById('table-container').classList.remove('hidden');
+        
+        // Título y Subtítulo
         document.getElementById('main-header-title').textContent = grupo.nombre;
-        
-        let totalColor = "text-amber-700"; 
-        
-        document.getElementById('page-subtitle').innerHTML = `
-            <h2 class="text-xl font-semibold text-slate-900">Total del Grupo: 
-                <span class="${totalColor}">${AppFormat.formatNumber(grupo.total)} ℙ</span>
-            </h2>
+        const subtitle = document.getElementById('page-subtitle');
+        subtitle.classList.remove('hidden');
+        subtitle.innerHTML = `Total del Grupo: <span class="font-bold color-dorado-main">${AppFormat.formatNumber(grupo.total)} ℙ</span>`;
+
+        // Ordenar usuarios por saldo
+        const usuarios = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
+
+        // Cabecera de la tabla
+        let html = `
+            <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">#</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Estudiante</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
         `;
-        
-        const listContainer = document.getElementById('table-container');
-        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); 
 
-        const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
-
-        const listBody = document.createElement('div');
-        listBody.className = "divide-y divide-amber-100"; 
-
-        usuariosOrdenados.forEach((usuario, index) => {
-            const pos = index + 1;
+        // Generar filas
+        usuarios.forEach((usuario, index) => {
+            const rank = index + 1;
+            let rowClass = "hover:bg-slate-50 transition-colors cursor-pointer group"; 
+            let rankClass = "bg-slate-100 text-slate-600";
             
-            const rankTextClass = 'color-dorado-main';
-            const pincelesColor = 'color-dorado-main';
-
-            const grupoNombreEscapado = escapeHTML(grupo.nombre);
-            const usuarioNombreEscapado = escapeHTML(usuario.nombre);
-
-            const itemDiv = document.createElement('div');
+            // Colores para el Top 3
+            if (rank === 1) rankClass = "bg-amber-100 text-amber-700";
+            if (rank === 2) rankClass = "bg-slate-200 text-slate-700";
+            if (rank === 3) rankClass = "bg-orange-100 text-orange-700";
             
-            // --- NUEVO: Lógica SOCIO ---
-            const esSocio = usuario.etiqueta && usuario.etiqueta.toUpperCase() === 'SOCIO';
-            let rowClass = "grid grid-cols-12 px-6 py-3 hover:bg-slate-100 cursor-pointer transition-colors";
+            // --- NUEVO: DETECTAR Y PINTAR SOCIOS ---
+            // Aquí usamos la función del Bloque 1 para saber si es Oro, Plata o Bronce
+            const socioData = AppFormat.getSocioData(usuario.etiqueta);
+            let badgeHtml = '';
             
-            // Si es socio, añadimos la clase visual y preparamos el badge
-            let htmlBadge = '';
-            if (esSocio) {
-                rowClass += " socio-row"; // Clase del CSS
-                htmlBadge = ' <span class="socio-badge">SOCIO</span>';
+            if (socioData) {
+                // Añadir la clase especial (ej: socio-row-gold) a toda la fila
+                rowClass += ` ${socioData.rowClass}`; 
+                // Crear la insignia (badge) pequeña al lado del nombre
+                badgeHtml = `<span class="${socioData.badgeClass} ml-2">${socioData.label}</span>`;
             }
-            // ---------------------------
+
+            const nombreEscapado = escapeHTML(usuario.nombre);
+            const grupoEscapado = escapeHTML(grupo.nombre);
+
+            html += `
+                <tr class="${rowClass}" onclick="AppUI.showStudentModal('${grupoEscapado}', '${nombreEscapado}', ${rank})">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${rankClass}">${rank}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-semibold text-slate-800 group-hover:color-dorado-main transition-colors flex items-center">
+                            ${usuario.nombre}
+                            ${badgeHtml} <!-- Aquí se inserta la etiqueta SOCIO/PLATA/BRONCE -->
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                        <span class="text-base font-bold text-slate-900 font-tabular-nums">${AppFormat.formatNumber(usuario.pinceles)} ℙ</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div></div>`;
+        document.getElementById('table-container').innerHTML = html;
+    },
+    
+    // ---------------------------
 
             itemDiv.className = rowClass;
             itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
