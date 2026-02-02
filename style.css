@@ -615,71 +615,119 @@ body::after {
 }
 
 /* =========================================
-   ESTILOS PARA SOCIOS DEL BANCO (VIP - GOLD)
-   Versión: Fondo Dorado Constante + Brillo Lento
-   Sin borde lateral
+   ESTILOS PARA SOCIOS DEL BANCO (VIP)
+   Versión: ORO, PLATA Y BRONCE
    ========================================= */
 
-/* --- 1. FILA DE SOCIO (Contenedor) --- */
-.socio-row {
-    /* Fondo Base: Dorado suave constante (siempre visible) */
+/* --- 0. ANIMACIÓN BASE --- */
+@keyframes backgroundPass {
+    0% { background-position: 200% 0; }
+    100% { background-position: -150% 0; }
+}
+
+/* --- 1. SOCIO ORO (GOLD) - Clásico --- */
+.socio-row-gold {
     background-color: rgba(218, 165, 32, 0.15); 
-    
-    /* Degradado Animado: Haz de luz blanca que pasa */
     background-image: linear-gradient(
         110deg, 
-        transparent 0%, 
-        transparent 45%, 
-        rgba(255, 255, 255, 0.7) 50%,  /* Luz blanca central intensa */
-        transparent 55%, 
-        transparent 100%
+        transparent 0%, transparent 45%, 
+        rgba(255, 255, 255, 0.7) 50%, 
+        transparent 55%, transparent 100%
     );
-    
-    /* Configuración del fondo para la animación */
     background-size: 250% 100%;
     background-repeat: no-repeat;
-    
-    /* Posicionamiento y transiciones suaves */
     position: relative;
     transition: all 0.3s ease;
-    
-    /* Animación: Lenta (7s), Lineal (sin aceleración) e Infinita */
     animation: backgroundPass 7s linear infinite;
 }
-
-/* Lógica de movimiento: De derecha a izquierda, constante */
-@keyframes backgroundPass {
-    0% { 
-        background-position: 200% 0; /* Empieza fuera a la derecha */
-    }
-    100% { 
-        background-position: -150% 0; /* Termina fuera a la izquierda */
-    }
+.socio-row-gold:hover {
+    background-color: rgba(218, 165, 32, 0.22);
+    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.15);
+    transform: translateY(-1px);
+    z-index: 10;
 }
-
-/* --- 2. EFECTO HOVER EN LA FILA --- */
-.socio-row:hover {
-    background-color: rgba(218, 165, 32, 0.22); /* Se oscurece un poco al pasar el mouse */
-    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.15); /* Sombra dorada */
-    transform: translateY(-1px); /* Pequeña elevación */
-    z-index: 10; /* Se pone por encima de otras filas */
-}
-
-/* --- 3. ETIQUETA "SOCIO" (Estática y Redondeada) --- */
-.socio-badge {
+.socio-badge-gold {
     background-color: #DAA520; 
     color: #fff;
-    
-    /* Tamaño y forma redondeada (Píldora) */
     font-size: 0.5rem;      
     padding: 2px 8px;       
     border-radius: 9999px;  
     margin-left: 8px;       
-    
-    /* Sombra suave para profundidad */
     box-shadow: 0 1px 2px rgba(218, 165, 32, 0.4);
-    
-    /* Tipografía */
+    text-transform: uppercase;
+    font-weight: 800; 
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+/* --- 2. SOCIO PLATA (SILVER) --- */
+.socio-row-silver {
+    background-color: rgba(192, 192, 192, 0.2); 
+    background-image: linear-gradient(
+        110deg, 
+        transparent 0%, transparent 45%, 
+        rgba(255, 255, 255, 0.9) 50%, 
+        transparent 55%, transparent 100%
+    );
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    position: relative;
+    transition: all 0.3s ease;
+    animation: backgroundPass 7s linear infinite;
+}
+.socio-row-silver:hover {
+    background-color: rgba(192, 192, 192, 0.3);
+    box-shadow: 0 4px 12px rgba(160, 160, 160, 0.2);
+    transform: translateY(-1px);
+    z-index: 10;
+}
+.socio-badge-silver {
+    background-color: #9ca3af; /* Gray-400/500 mix */
+    color: #fff;
+    font-size: 0.5rem;      
+    padding: 2px 8px;       
+    border-radius: 9999px;  
+    margin-left: 8px;       
+    box-shadow: 0 1px 2px rgba(156, 163, 175, 0.4);
+    text-transform: uppercase;
+    font-weight: 800; 
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+/* --- 3. SOCIO BRONCE (BRONZE) --- */
+.socio-row-bronze {
+    background-color: rgba(205, 127, 50, 0.15); 
+    background-image: linear-gradient(
+        110deg, 
+        transparent 0%, transparent 45%, 
+        rgba(255, 255, 255, 0.6) 50%, 
+        transparent 55%, transparent 100%
+    );
+    background-size: 250% 100%;
+    background-repeat: no-repeat;
+    position: relative;
+    transition: all 0.3s ease;
+    animation: backgroundPass 7s linear infinite;
+}
+.socio-row-bronze:hover {
+    background-color: rgba(205, 127, 50, 0.22);
+    box-shadow: 0 4px 12px rgba(205, 127, 50, 0.15);
+    transform: translateY(-1px);
+    z-index: 10;
+}
+.socio-badge-bronze {
+    background-color: #b45309; /* Amber-700ish bronze */
+    color: #fff;
+    font-size: 0.5rem;      
+    padding: 2px 8px;       
+    border-radius: 9999px;  
+    margin-left: 8px;       
+    box-shadow: 0 1px 2px rgba(180, 83, 9, 0.4);
     text-transform: uppercase;
     font-weight: 800; 
     letter-spacing: 0.5px;
